@@ -9,7 +9,7 @@
 'use strict';
 
 // show the LittleJS splash screen
-setShowSplashScreen(true);
+setShowSplashScreen(false);
 
 let spriteAtlas, score, deaths;
 
@@ -42,6 +42,7 @@ function gameInit()
     cameraScale = 4*16;
     buildLevel();
     cameraPos = getCameraTarget();
+    
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -4,23 +4,23 @@
 ' Note: StateSmith treats state names and events as case insensitive.
 ' More info: https://github.com/StateSmith/StateSmith/wiki/PlantUML
 
-[*] -> State1
-state State1
-state State2
+state SLEEPING
+state AWAKE
+' state HUNTING
+
+[*] -> SLEEPING
 
 
 ' ///////////////////////// STATE HANDLERS /////////////////////////
 ' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
 
-' State1
-State1: enter / count++;
-State1: exit  / 
-State1 --> State2 : event1
+SLEEPING: enter / obj.swellSpeed = 2;
+SLEEPING --> AWAKE: [obj.playerDist() <= 6]
 
-' State2
-State2: enter / count += 10;
-State2: exit  / 
-State2 --> State1 : event2
+AWAKE: enter / obj.swellSpeed = 8;
+AWAKE: do / obj.jumpAround();
+AWAKE --> SLEEPING: [obj.playerDist() >= 9]
+' AWAKE --> JUMPING: [obj.playerDist() <= 4]
 
 
 ' //////////////////////// StateSmith config ////////////////////////
@@ -28,21 +28,12 @@ State2 --> State1 : event2
 ' More info: https://github.com/StateSmith/StateSmith/issues/335
 
 /'! $CONFIG : toml
-
-[RenderConfig]
-FileTop = """
-    // Whatever you put in this `FileTop` section will end up 
-    // being printed at the top of every generated code file.
-    """
-AutoExpandedVars = """
-    count: 0, // this var can be referenced in diagram
-    """
-
-[RenderConfig.JavaScript]
-# ExtendsSuperClass = "MyUserBaseClass"
-# UseExportOnClass = true
-
 [SmRunnerSettings]
 transpilerId = "JavaScript"
+
+[RenderConfig]
+AutoExpandedVars = """
+    obj: null, // need to set this to instance of Enemy1 before calling start()
+    """
 '/
 @enduml
