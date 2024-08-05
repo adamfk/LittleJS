@@ -1,0 +1,48 @@
+@startuml Enemy1Sm
+
+' //////////////////////// STATE ORGANIZATION ///////////////////////
+' Note: StateSmith treats state names and events as case insensitive.
+' More info: https://github.com/StateSmith/StateSmith/wiki/PlantUML
+
+[*] -> State1
+state State1
+state State2
+
+
+' ///////////////////////// STATE HANDLERS /////////////////////////
+' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
+
+' State1
+State1: enter / count++;
+State1: exit  / 
+State1 --> State2 : event1
+
+' State2
+State2: enter / count += 10;
+State2: exit  / 
+State2 --> State1 : event2
+
+
+' //////////////////////// StateSmith config ////////////////////////
+' The below special comment block sets the StateSmith configuration.
+' More info: https://github.com/StateSmith/StateSmith/issues/335
+
+/'! $CONFIG : toml
+
+[RenderConfig]
+FileTop = """
+    // Whatever you put in this `FileTop` section will end up 
+    // being printed at the top of every generated code file.
+    """
+AutoExpandedVars = """
+    count: 0, // this var can be referenced in diagram
+    """
+
+[RenderConfig.JavaScript]
+# ExtendsSuperClass = "MyUserBaseClass"
+# UseExportOnClass = true
+
+[SmRunnerSettings]
+transpilerId = "JavaScript"
+'/
+@enduml
