@@ -92,7 +92,7 @@ function loadLevel()
                 if (tile == 18)
                     new Crate(objectPos);
                 if (tile == 19)
-                    new Enemy(objectPos);
+                    new Enemy1(objectPos);
                 if (tile == 20)
                     new Coin(objectPos);
                 setTileData(pos, layer, 0);

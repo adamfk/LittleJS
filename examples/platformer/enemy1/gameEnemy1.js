@@ -8,7 +8,7 @@
 
 'use strict';
 
-class Enemy extends GameObject 
+class Enemy1 extends GameObject 
 {
     constructor(pos) 
     { 

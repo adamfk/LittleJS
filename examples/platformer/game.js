@@ -64,7 +64,7 @@ function gameUpdate()
     
     // E = drop enemy
     if (keyWasPressed('KeyE'))
-        new Enemy(mousePos);
+        new Enemy1(mousePos);
 
     // X = make explosion
     if (keyWasPressed('KeyX'))
