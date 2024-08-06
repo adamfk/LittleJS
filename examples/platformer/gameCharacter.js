@@ -238,7 +238,7 @@ class Character extends GameObject
         if (this.isDead() || this.getAliveTime() < 1 || this.dodgeTimer.active())
             return;
 
-        makeBlood(damagingObject ? damagingObject.pos : this.pos);
+        makeBlood(damagingObject ? damagingObject.pos : this.pos, this.color);
         super.damage(damage, damagingObject);
     }
 
@@ -247,7 +247,7 @@ class Character extends GameObject
         if (this.isDead())
             return;
 
-        makeBlood(this.pos, 100);
+        makeBlood(this.pos, this.color, 400);
         sound_die.play(this.pos);
 
         this.health = 0;

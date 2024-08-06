@@ -34,7 +34,11 @@ const persistentParticleDestroyCallback = (particle)=>
         tileLayers[foregroundLayerIndex].drawTile(particle.pos, particle.size, particle.tileInfo, particle.color, particle.angle, particle.mirror);
 }
 
-function makeBlood(pos, amount) { makeDebris(pos, hsl(0,1,.5), amount, .1, 0); }
+function makeBlood(pos, color, amount) { 
+    // makeDebris(pos, hsl(0,1,.5), amount, .1, 0);
+    makeDebris(pos, color, amount, .1, 0);
+}
+
 function makeDebris(pos, color = hsl(), amount = 50, size=.2, elasticity = .3)
 {
     const color2 = color.lerp(hsl(), .5);
