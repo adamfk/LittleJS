@@ -224,7 +224,7 @@ state PASSIVE {
 
         SLEEPING : enter / #123; obj.swellSpeed = 2#59; #125;
 
-        SLEEPING : enter / #123; obj.timer.set(rand(5, 10))#59; #125;
+        SLEEPING : enter / #123; timer.set(rand(5, 10))#59; #125;
 
         state PATROL {
 
@@ -240,7 +240,7 @@ state PASSIVE {
 
                 PATROL_END_DELAY : PATROL_END_DELAY
 
-                PATROL_END_DELAY : enter / #123; obj.timer.set(0.5)#59; #125;
+                PATROL_END_DELAY : enter / #123; timer.set(0.5)#59; #125;
 
                 PATROL_END_HOP
 
@@ -268,7 +268,7 @@ HUNTING : HUNTING
 
 HUNTING : enter / #123; obj.swellSpeed = 30#59; #125;
 
-HUNTING : enter / #123; obj.timer.set(10)#59; #125;
+HUNTING : (enter, DAMAGED) / #123; timer.set(10)#59; #125;
 
 HUNTING : do / #123; obj.doHuntPlayer()#59; #125;
 
@@ -280,7 +280,7 @@ SLEEPING --> JUMP_AROUND : do [obj.playerDist() <= 5]
 
 PATROL_MARCH --> PATROL_END_DELAY : do [obj.isPatrolEnd()]
 
-PATROL_END_DELAY --> PATROL_END_HOP : do [obj.timer.elapsed()]
+PATROL_END_DELAY --> PATROL_END_HOP : do [timer.elapsed()]
 
 PATROL_END_HOP --> PATROL_MARCH : do [obj.groundObject] / #123; obj.patrolTurn()#59; #125;
 
@@ -292,7 +292,7 @@ JUMP_AROUND --> HUNTING : do [obj.playerDist() <= 4]
 
 HUNTING --> SLEEPING : PLAYER_DEAD
 
-HUNTING --> JUMP_AROUND : do [obj.timer.elapsed()]
+HUNTING --> JUMP_AROUND : do [timer.elapsed()]
 
 ROOT.(InitialState) --> PATROL
 
@@ -470,6 +470,7 @@ evaluateGuard = null;
     {
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#HUNTING_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = this.#HUNTING_damaged;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#HUNTING_do;
         this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = this.#HUNTING_player_dead;
         
@@ -488,10 +489,10 @@ evaluateGuard = null;
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(10);"); }
+        // uml: (enter, DAMAGED) / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);"); }
         {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(10);");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(10);");
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);");`
+            this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);");
         } // end of behavior for HUNTING
     }
     
@@ -506,8 +507,24 @@ evaluateGuard = null;
         
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#ROOT_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = null;  // no ancestor listens to this event
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
         this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = null;  // no ancestor listens to this event
+    }
+    
+    #HUNTING_damaged()
+    {
+        // No ancestor state handles `damaged` event.
+        
+        // HUNTING behavior
+        // uml: (enter, DAMAGED) / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);");`
+            this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);");
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+        } // end of behavior for HUNTING
     }
     
     #HUNTING_do()
@@ -525,8 +542,8 @@ evaluateGuard = null;
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge9"); } TransitionTo(JUMP_AROUND)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()"))
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "timer.elapsed()") || this.evaluateGuard("timer.elapsed()")] / { this.tracer?.edgeTransition("edge9"); } TransitionTo(JUMP_AROUND)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "timer.elapsed()") || this.evaluateGuard("timer.elapsed()"))
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#HUNTING_exit();
@@ -736,10 +753,10 @@ evaluateGuard = null;
         } // end of behavior for PATROL
         
         // PATROL behavior
-        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));"); }
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));"); }
         {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));");
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));");`
+            this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));");
         } // end of behavior for PATROL
     }
     
@@ -775,10 +792,10 @@ evaluateGuard = null;
         } // end of behavior for PATROL_END_DELAY
         
         // PATROL_END_DELAY behavior
-        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);"); }
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(0.5);"); }
         {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);");
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(0.5);");`
+            this.tracer?.log("⚡ FSM would execute action: " + "timer.set(0.5);");
         } // end of behavior for PATROL_END_DELAY
     }
     
@@ -801,8 +818,8 @@ evaluateGuard = null;
         // No ancestor state handles `do` event.
         
         // PATROL_END_DELAY behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge3"); } TransitionTo(PATROL_END_HOP)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()"))
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "timer.elapsed()") || this.evaluateGuard("timer.elapsed()")] / { this.tracer?.edgeTransition("edge3"); } TransitionTo(PATROL_END_HOP)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "timer.elapsed()") || this.evaluateGuard("timer.elapsed()"))
         {
             // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition).
             this.#PATROL_END_DELAY_exit();
@@ -984,10 +1001,10 @@ evaluateGuard = null;
         } // end of behavior for SLEEPING
         
         // SLEEPING behavior
-        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));"); }
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));"); }
         {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(rand(5, 10));");
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));");`
+            this.tracer?.log("⚡ FSM would execute action: " + "timer.set(rand(5, 10));");
         } // end of behavior for SLEEPING
     }
     

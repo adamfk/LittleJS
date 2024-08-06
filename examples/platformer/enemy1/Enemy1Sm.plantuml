@@ -30,18 +30,18 @@ state HUNTING
 PASSIVE --> HUNTING: DAMAGED
 
 SLEEPING: enter / obj.swellSpeed = 2;
-SLEEPING: enter / obj.timer.set(rand(5, 10));
-' SLEEPING -> PATROL: [obj.timer.elapsed()]
+SLEEPING: enter / timer.set(rand(5, 10));
+' SLEEPING -> PATROL: [timer.elapsed()]
 SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
 
-PATROL: enter / obj.timer.set(rand(5, 10));
-' PATROL -> SLEEPING: [obj.timer.elapsed()]
+PATROL: enter / timer.set(rand(5, 10));
+' PATROL -> SLEEPING: [timer.elapsed()]
 PATROL_MARCH: enter / obj.swellSpeed = 4;
 PATROL_MARCH: do / obj.doPatrolMarch();
 PATROL_MARCH --> PATROL_END_DELAY: [obj.isPatrolEnd()]
 
-PATROL_END_DELAY: enter / obj.timer.set(0.5);
-PATROL_END_DELAY --> PATROL_END_HOP: [obj.timer.elapsed()]
+PATROL_END_DELAY: enter / timer.set(0.5);
+PATROL_END_DELAY --> PATROL_END_HOP: [timer.elapsed()]
 
 PATROL_END_HOP: enter / obj.smallVerticalHop();
 PATROL_END_HOP --> PATROL_MARCH: [obj.groundObject] / obj.patrolTurn();
@@ -54,10 +54,9 @@ JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
 JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
 
 HUNTING: enter / obj.swellSpeed = 30;
-HUNTING: enter/ obj.timer.set(10);
+HUNTING: (enter,DAMAGED) / timer.set(10);
 HUNTING: do / obj.doHuntPlayer();
-HUNTING -l-> JUMP_AROUND: [obj.timer.elapsed()]
-
+HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
 
 ' //////////////////////// StateSmith config ////////////////////////
 ' The below special comment block sets the StateSmith configuration.
@@ -69,6 +68,7 @@ transpilerId = "JavaScript"
 
 [RenderConfig]
 AutoExpandedVars = """
+    timer: new Timer(0),
     obj: null, // need to set this to instance of Enemy1 before calling start()
     """
 '/

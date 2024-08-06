@@ -1,11 +1,3 @@
-/*
-    LittleJS Platformer Example - Objects
-    - Base GameObject class for objects with health
-    - Crate object collides with player, can be destroyed
-    - Weapon is held and fires bullets with some settings
-    - Bullet is the projectile launched by a weapon
-*/
-
 'use strict';
 
 class Enemy1 extends GameObject 
@@ -23,7 +15,6 @@ class Enemy1 extends GameObject
         this.sm = new Enemy1Sm();
         this.sm.vars.obj = this;
         this.spawnPos = pos.copy();
-        this.timer = new Timer(rand(20));
         this.patrolVec = vec2(0.05,0);
         this.patrolRange = 7;
 
@@ -49,6 +40,8 @@ class Enemy1 extends GameObject
     {
         if (this.willHitTile(this.patrolVec))
             return true;
+
+        // TODO check if will fall off edge
 
         const distanceToSpawn = this.pos.distance(this.spawnPos);
         const nextDistanceToSpawn = this.pos.add(this.patrolVec).distance(this.spawnPos);
@@ -179,7 +172,7 @@ class Enemy1 extends GameObject
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
 
-        const debugClosest = false;
+        const debugClosest = true;
         if (debugClosest) {
             if (this.playerDist() < 20)
             {
@@ -187,7 +180,7 @@ class Enemy1 extends GameObject
             }
             else
             {
-                this.destroy();
+                // this.destroy();
             }
         }
     }

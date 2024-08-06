@@ -46,6 +46,7 @@ class Enemy1Sm
     
     // Variables. Can be used for inputs, outputs, user variables...
     vars = {
+        timer: new Timer(0),
         obj: null, // need to set this to instance of Enemy1 before calling start()
     };
     
@@ -140,6 +141,7 @@ class Enemy1Sm
     {
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#HUNTING_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = this.#HUNTING_damaged;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#HUNTING_do;
         this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = this.#HUNTING_player_dead;
         
@@ -151,10 +153,10 @@ class Enemy1Sm
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: enter / { obj.timer.set(10); }
+        // uml: (enter, DAMAGED) / { timer.set(10); }
         {
-            // Step 1: execute action `obj.timer.set(10);`
-            this.vars.obj.timer.set(10);
+            // Step 1: execute action `timer.set(10);`
+            this.vars.timer.set(10);
         } // end of behavior for HUNTING
     }
     
@@ -162,8 +164,24 @@ class Enemy1Sm
     {
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#ROOT_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = null;  // no ancestor listens to this event
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
         this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = null;  // no ancestor listens to this event
+    }
+    
+    #HUNTING_damaged()
+    {
+        // No ancestor state handles `damaged` event.
+        
+        // HUNTING behavior
+        // uml: (enter, DAMAGED) / { timer.set(10); }
+        {
+            // Step 1: execute action `timer.set(10);`
+            this.vars.timer.set(10);
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+        } // end of behavior for HUNTING
     }
     
     #HUNTING_do()
@@ -181,8 +199,8 @@ class Enemy1Sm
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: do [obj.timer.elapsed()] TransitionTo(JUMP_AROUND)
-        if (this.vars.obj.timer.elapsed())
+        // uml: do [timer.elapsed()] TransitionTo(JUMP_AROUND)
+        if (this.vars.timer.elapsed())
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#HUNTING_exit();
@@ -352,10 +370,10 @@ class Enemy1Sm
         this.#currentStateExitHandler = this.#PATROL_exit;
         
         // PATROL behavior
-        // uml: enter / { obj.timer.set(rand(5, 10)); }
+        // uml: enter / { timer.set(rand(5, 10)); }
         {
-            // Step 1: execute action `obj.timer.set(rand(5, 10));`
-            this.vars.obj.timer.set(rand(5, 10));
+            // Step 1: execute action `timer.set(rand(5, 10));`
+            this.vars.timer.set(rand(5, 10));
         } // end of behavior for PATROL
     }
     
@@ -377,10 +395,10 @@ class Enemy1Sm
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_END_DELAY_do;
         
         // PATROL_END_DELAY behavior
-        // uml: enter / { obj.timer.set(0.5); }
+        // uml: enter / { timer.set(0.5); }
         {
-            // Step 1: execute action `obj.timer.set(0.5);`
-            this.vars.obj.timer.set(0.5);
+            // Step 1: execute action `timer.set(0.5);`
+            this.vars.timer.set(0.5);
         } // end of behavior for PATROL_END_DELAY
     }
     
@@ -396,8 +414,8 @@ class Enemy1Sm
         // No ancestor state handles `do` event.
         
         // PATROL_END_DELAY behavior
-        // uml: do [obj.timer.elapsed()] TransitionTo(PATROL_END_HOP)
-        if (this.vars.obj.timer.elapsed())
+        // uml: do [timer.elapsed()] TransitionTo(PATROL_END_HOP)
+        if (this.vars.timer.elapsed())
         {
             // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition).
             this.#PATROL_END_DELAY_exit();
@@ -542,10 +560,10 @@ class Enemy1Sm
         } // end of behavior for SLEEPING
         
         // SLEEPING behavior
-        // uml: enter / { obj.timer.set(rand(5, 10)); }
+        // uml: enter / { timer.set(rand(5, 10)); }
         {
-            // Step 1: execute action `obj.timer.set(rand(5, 10));`
-            this.vars.obj.timer.set(rand(5, 10));
+            // Step 1: execute action `timer.set(rand(5, 10));`
+            this.vars.timer.set(rand(5, 10));
         } // end of behavior for SLEEPING
     }
     
