@@ -80,7 +80,7 @@ function gameUpdate()
 function getCameraTarget()
 {
     // camera is above player
-    const offset = 3*percent(mainCanvasSize.y, 300, 600);
+    const offset = percent(mainCanvasSize.y, 300, 600);
     return player.pos.add(vec2(0, offset));
 }
 
