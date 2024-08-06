@@ -23,6 +23,7 @@ class Enemy1 extends GameObject
         this.sm = new Enemy1Sm();
         this.sm.vars.obj = this;
         this.sm.start();
+        this.huntingTimer = new Timer(rand(20));
     }
 
     playerDist()
@@ -33,13 +34,47 @@ class Enemy1 extends GameObject
     jumpAround()
     {
         // jump around randomly
-        if (this.groundObject && rand() < 0.06)
+        if (this.groundObject && rand() < 0.02)
         {
-            this.velocity = vec2(rand(.1,-.1), rand(.4,.2));
+            this.velocity = vec2(rand(.1,-.1), rand(.4, .2));
             sound_jump.play(this.pos, .4, 2);
         }
     }
 
+    jumpTowardsPlayer()
+    {
+        const vecToPlayer = player.pos.subtract(this.pos).normalize();
+
+        // if in air, drift towards player
+        if (!this.groundObject)
+        {
+            this.velocity.x += vecToPlayer.x * .001;
+        }
+        else
+        {
+            // on ground. randomly jump towards player
+            if (rand() < 0.01)
+            {
+                const jumpYSpeed = rand(.4, .2);
+                const jumpXSpeed = rand(.07, .2);
+                this.velocity = vecToPlayer.multiply(vec2(jumpXSpeed, 0));
+                this.velocity.y = jumpYSpeed;
+                sound_jump.play(this.pos, .4, 2);
+            }
+            else
+            {
+                // if not jumping, march towards player
+                this.velocity = vecToPlayer.multiply(vec2(.07, .0));
+            }
+        }
+    }
+
+    damage(damage, damagingObject)
+    {
+        super.damage(damage, damagingObject);
+        this.sm.dispatchEvent(Enemy1Sm.EventId.DAMAGED);
+    }
+    
     update()
     {
         super.update();
@@ -51,7 +86,12 @@ class Enemy1 extends GameObject
 
         // damage player if touching
         if (isOverlapping(this.pos, this.size, player.pos, player.size))
+        {
             player.damage(1, this);
+        }
+
+        if (player.isDead())
+            this.sm.dispatchEvent(Enemy1Sm.EventId.PLAYER_DEAD);
     }
 
     kill()

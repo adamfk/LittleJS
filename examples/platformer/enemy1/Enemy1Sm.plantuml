@@ -5,8 +5,11 @@
 ' More info: https://github.com/StateSmith/StateSmith/wiki/PlantUML
 
 state SLEEPING
-state AWAKE
-' state HUNTING
+
+state AWAKE {
+    state JUMP_AROUND
+    state HUNTING
+}
 
 [*] -> SLEEPING
 
@@ -15,12 +18,20 @@ state AWAKE
 ' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
 
 SLEEPING: enter / obj.swellSpeed = 2;
-SLEEPING --> AWAKE: [obj.playerDist() <= 6]
+SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 8]
 
-AWAKE: enter / obj.swellSpeed = 8;
-AWAKE: do / obj.jumpAround();
-AWAKE --> SLEEPING: [obj.playerDist() >= 9]
-' AWAKE --> JUMPING: [obj.playerDist() <= 4]
+AWAKE -up-> SLEEPING: PLAYER_DEAD
+
+JUMP_AROUND: enter / obj.swellSpeed = 8;
+JUMP_AROUND: do / obj.jumpAround();
+JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
+JUMP_AROUND --> HUNTING: DAMAGED
+JUMP_AROUND --> HUNTING: [obj.playerDist() <= 4]
+
+HUNTING: enter / obj.swellSpeed = 30;
+HUNTING: enter/ obj.huntingTimer.set(10);
+HUNTING: do / obj.jumpTowardsPlayer();
+HUNTING --> JUMP_AROUND: [obj.huntingTimer.elapsed()]
 
 
 ' //////////////////////// StateSmith config ////////////////////////

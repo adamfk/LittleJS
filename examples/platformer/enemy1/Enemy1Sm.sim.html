@@ -222,19 +222,41 @@ SLEEPING : SLEEPING
 
 SLEEPING : enter / #123; obj.swellSpeed = 2#59; #125;
 
-AWAKE
+state AWAKE {
 
-AWAKE : AWAKE
+        JUMP_AROUND
 
-AWAKE : enter / #123; obj.swellSpeed = 8#59; #125;
+        JUMP_AROUND : JUMP_AROUND
 
-AWAKE : do / #123; obj.jumpAround()#59; #125;
+        JUMP_AROUND : enter / #123; obj.swellSpeed = 8#59; #125;
+
+        JUMP_AROUND : do / #123; obj.jumpAround()#59; #125;
+
+        HUNTING
+
+        HUNTING : HUNTING
+
+        HUNTING : enter / #123; obj.swellSpeed = 30#59; #125;
+
+        HUNTING : enter / #123; obj.huntingTimer.set(10)#59; #125;
+
+        HUNTING : do / #123; obj.jumpTowardsPlayer()#59; #125;
+
+}
 
 state "$initial_state" as ROOT.(InitialState)
 
-SLEEPING --> AWAKE : do [obj.playerDist() <= 6]
+SLEEPING --> JUMP_AROUND : do [obj.playerDist() <= 8]
 
-AWAKE --> SLEEPING : do [obj.playerDist() >= 9]
+AWAKE --> SLEEPING : PLAYER_DEAD
+
+JUMP_AROUND --> SLEEPING : do [obj.playerDist() >= 10]
+
+JUMP_AROUND --> HUNTING : DAMAGED
+
+JUMP_AROUND --> HUNTING : do [obj.playerDist() <= 4]
+
+HUNTING --> JUMP_AROUND : do [obj.huntingTimer.elapsed()]
 
 ROOT.(InitialState) --> SLEEPING
 
@@ -282,21 +304,25 @@ evaluateGuard = null;
     static EventId = 
     {
         DO : 0, // The `do` event is special. State event handlers do not consume this event (ancestors all get it too) unless a transition occurs.
+        DAMAGED : 1,
+        PLAYER_DEAD : 2,
     }
     static { Object.freeze(this.EventId); }
     
-    static EventIdCount = 1;
+    static EventIdCount = 3;
     static { Object.freeze(this.EventIdCount); }
     
     static StateId = 
     {
         ROOT : 0,
         AWAKE : 1,
-        SLEEPING : 2,
+        HUNTING : 2,
+        JUMP_AROUND : 3,
+        SLEEPING : 4,
     }
     static { Object.freeze(this.StateId); }
     
-    static StateIdCount = 3;
+    static StateIdCount = 5;
     static { Object.freeze(this.StateIdCount); }
     
     // Used internally by state machine. Feel free to inspect, but don't modify.
@@ -326,12 +352,12 @@ evaluateGuard = null;
             // ROOT.<InitialState> is a pseudo state and cannot have an `enter` trigger.
             
             // ROOT.<InitialState> behavior
-            // uml: / { this.tracer?.edgeTransition("edge2"); } TransitionTo(SLEEPING)
+            // uml: / { this.tracer?.edgeTransition("edge6"); } TransitionTo(SLEEPING)
             {
                 // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
                 
-                // Step 2: Transition action: `this.tracer?.edgeTransition("edge2");`.
-                this.tracer?.edgeTransition("edge2");
+                // Step 2: Transition action: `this.tracer?.edgeTransition("edge6");`.
+                this.tracer?.edgeTransition("edge6");
                 
                 // Step 3: Enter/move towards transition target `SLEEPING`.
                 this.#SLEEPING_enter();
@@ -391,20 +417,13 @@ evaluateGuard = null;
     {
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#AWAKE_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#AWAKE_do;
+        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = this.#AWAKE_player_dead;
         
         // AWAKE behavior
         // uml: enter / { this.tracer?.enterState('AWAKE'); }
         {
             // Step 1: execute action `this.tracer?.enterState('AWAKE');`
             this.tracer?.enterState('AWAKE');
-        } // end of behavior for AWAKE
-        
-        // AWAKE behavior
-        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;"); }
-        {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;");
         } // end of behavior for AWAKE
     }
     
@@ -419,29 +438,18 @@ evaluateGuard = null;
         
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#ROOT_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = null;  // no ancestor listens to this event
     }
     
-    #AWAKE_do()
+    #AWAKE_player_dead()
     {
-        // No ancestor state handles `do` event.
+        // No ancestor state handles `player_dead` event.
         
         // AWAKE behavior
-        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();"); }
-        {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();");
-            
-            // Step 2: determine if ancestor gets to handle event next.
-            // Don't consume special `do` event.
-        } // end of behavior for AWAKE
-        
-        // AWAKE behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 9") || this.evaluateGuard("obj.playerDist() >= 9")] / { this.tracer?.edgeTransition("edge1"); } TransitionTo(SLEEPING)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 9") || this.evaluateGuard("obj.playerDist() >= 9"))
+        // uml: PLAYER_DEAD / { this.tracer?.edgeTransition("edge1"); } TransitionTo(SLEEPING)
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
-            this.#AWAKE_exit();
+            this.#exitUpToStateHandler(this.#ROOT_exit);
             
             // Step 2: Transition action: `this.tracer?.edgeTransition("edge1");`.
             this.tracer?.edgeTransition("edge1");
@@ -454,6 +462,205 @@ evaluateGuard = null;
             // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
         } // end of behavior for AWAKE
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state HUNTING
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #HUNTING_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#HUNTING_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#HUNTING_do;
+        
+        // HUNTING behavior
+        // uml: enter / { this.tracer?.enterState('HUNTING'); }
+        {
+            // Step 1: execute action `this.tracer?.enterState('HUNTING');`
+            this.tracer?.enterState('HUNTING');
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 30;"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 30;");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 30;");
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.huntingTimer.set(10);"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.huntingTimer.set(10);");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.huntingTimer.set(10);");
+        } // end of behavior for HUNTING
+    }
+    
+    #HUNTING_exit()
+    {
+        // HUNTING behavior
+        // uml: exit / { this.tracer?.exitState('HUNTING'); }
+        {
+            // Step 1: execute action `this.tracer?.exitState('HUNTING');`
+            this.tracer?.exitState('HUNTING');
+        } // end of behavior for HUNTING
+        
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#AWAKE_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+    }
+    
+    #HUNTING_do()
+    {
+        // No ancestor state handles `do` event.
+        
+        // HUNTING behavior
+        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();");
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.huntingTimer.elapsed()") || this.evaluateGuard("obj.huntingTimer.elapsed()")] / { this.tracer?.edgeTransition("edge5"); } TransitionTo(JUMP_AROUND)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.huntingTimer.elapsed()") || this.evaluateGuard("obj.huntingTimer.elapsed()"))
+        {
+            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
+            this.#HUNTING_exit();
+            
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge5");`.
+            this.tracer?.edgeTransition("edge5");
+            
+            // Step 3: Enter/move towards transition target `JUMP_AROUND`.
+            this.#JUMP_AROUND_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.JUMP_AROUND;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for HUNTING
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state JUMP_AROUND
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #JUMP_AROUND_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#JUMP_AROUND_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = this.#JUMP_AROUND_damaged;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#JUMP_AROUND_do;
+        
+        // JUMP_AROUND behavior
+        // uml: enter / { this.tracer?.enterState('JUMP_AROUND'); }
+        {
+            // Step 1: execute action `this.tracer?.enterState('JUMP_AROUND');`
+            this.tracer?.enterState('JUMP_AROUND');
+        } // end of behavior for JUMP_AROUND
+        
+        // JUMP_AROUND behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 8;");
+        } // end of behavior for JUMP_AROUND
+    }
+    
+    #JUMP_AROUND_exit()
+    {
+        // JUMP_AROUND behavior
+        // uml: exit / { this.tracer?.exitState('JUMP_AROUND'); }
+        {
+            // Step 1: execute action `this.tracer?.exitState('JUMP_AROUND');`
+            this.tracer?.exitState('JUMP_AROUND');
+        } // end of behavior for JUMP_AROUND
+        
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#AWAKE_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = null;  // no ancestor listens to this event
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+    }
+    
+    #JUMP_AROUND_damaged()
+    {
+        // No ancestor state handles `damaged` event.
+        
+        // JUMP_AROUND behavior
+        // uml: DAMAGED / { this.tracer?.edgeTransition("edge3"); } TransitionTo(HUNTING)
+        {
+            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
+            this.#JUMP_AROUND_exit();
+            
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge3");`.
+            this.tracer?.edgeTransition("edge3");
+            
+            // Step 3: Enter/move towards transition target `HUNTING`.
+            this.#HUNTING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.HUNTING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for JUMP_AROUND
+    }
+    
+    #JUMP_AROUND_do()
+    {
+        // No ancestor state handles `do` event.
+        
+        // JUMP_AROUND behavior
+        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpAround();");
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for JUMP_AROUND
+        
+        // JUMP_AROUND behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 10") || this.evaluateGuard("obj.playerDist() >= 10")] / { this.tracer?.edgeTransition("edge2"); } TransitionTo(SLEEPING)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 10") || this.evaluateGuard("obj.playerDist() >= 10"))
+        {
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            this.#exitUpToStateHandler(this.#ROOT_exit);
+            
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge2");`.
+            this.tracer?.edgeTransition("edge2");
+            
+            // Step 3: Enter/move towards transition target `SLEEPING`.
+            this.#SLEEPING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.SLEEPING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for JUMP_AROUND
+        
+        // JUMP_AROUND behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 4") || this.evaluateGuard("obj.playerDist() <= 4")] / { this.tracer?.edgeTransition("edge4"); } TransitionTo(HUNTING)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 4") || this.evaluateGuard("obj.playerDist() <= 4"))
+        {
+            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
+            this.#JUMP_AROUND_exit();
+            
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge4");`.
+            this.tracer?.edgeTransition("edge4");
+            
+            // Step 3: Enter/move towards transition target `HUNTING`.
+            this.#HUNTING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.HUNTING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for JUMP_AROUND
     }
     
     
@@ -501,8 +708,8 @@ evaluateGuard = null;
         // No ancestor state handles `do` event.
         
         // SLEEPING behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 6") || this.evaluateGuard("obj.playerDist() <= 6")] / { this.tracer?.edgeTransition("edge0"); } TransitionTo(AWAKE)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 6") || this.evaluateGuard("obj.playerDist() <= 6"))
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 8") || this.evaluateGuard("obj.playerDist() <= 8")] / { this.tracer?.edgeTransition("edge0"); } TransitionTo(JUMP_AROUND)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 8") || this.evaluateGuard("obj.playerDist() <= 8"))
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#SLEEPING_exit();
@@ -510,11 +717,12 @@ evaluateGuard = null;
             // Step 2: Transition action: `this.tracer?.edgeTransition("edge0");`.
             this.tracer?.edgeTransition("edge0");
             
-            // Step 3: Enter/move towards transition target `AWAKE`.
+            // Step 3: Enter/move towards transition target `JUMP_AROUND`.
             this.#AWAKE_enter();
+            this.#JUMP_AROUND_enter();
             
             // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
-            this.stateId = Enemy1Sm.StateId.AWAKE;
+            this.stateId = Enemy1Sm.StateId.JUMP_AROUND;
             // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
         } // end of behavior for SLEEPING
@@ -527,6 +735,8 @@ evaluateGuard = null;
         {
             case Enemy1Sm.StateId.ROOT: return "ROOT";
             case Enemy1Sm.StateId.AWAKE: return "AWAKE";
+            case Enemy1Sm.StateId.HUNTING: return "HUNTING";
+            case Enemy1Sm.StateId.JUMP_AROUND: return "JUMP_AROUND";
             case Enemy1Sm.StateId.SLEEPING: return "SLEEPING";
             default: return "?";
         }
@@ -537,7 +747,9 @@ evaluateGuard = null;
     {
         switch (id)
         {
+            case Enemy1Sm.EventId.DAMAGED: return "DAMAGED";
             case Enemy1Sm.EventId.DO: return "DO";
+            case Enemy1Sm.EventId.PLAYER_DEAD: return "PLAYER_DEAD";
             default: return "?";
         }
     }
@@ -569,7 +781,7 @@ evaluateGuard = null;
             center: true
         });
 
-        const diagramEventNamesArray = ['do', ];
+        const diagramEventNamesArray = ['do', 'DAMAGED', 'PLAYER_DEAD', ];
 
         const leftPane = document.querySelector(".main");
         const rightPane = document.querySelector(".sidebar");
