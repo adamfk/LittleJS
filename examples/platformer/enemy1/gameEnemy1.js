@@ -96,6 +96,7 @@ class Enemy1 extends GameObject
         return isBeyondPatrolRange && isMovingAwayFromSpawn;
     }
 
+    // this isn't a good solution. it needs to ignore ladders, but take into account boxes and stuff...
     willHitTile(vec)
     {
         // vec = vec.normalize();
@@ -173,7 +174,8 @@ class Enemy1 extends GameObject
         super.damage(damage, damagingObject);
         this.sm.dispatchEvent(Enemy1Sm.EventId.DAMAGED);
 
-        if (!this.isDead() && this.groundObject)
+        // if damaged, sometimes jump at player
+        if (this.groundObject && rand() < 0.5)
         {
             this.jumpTowardsPlayer();
         }
@@ -186,6 +188,7 @@ class Enemy1 extends GameObject
         if (!player)
             return;
 
+        // run state machine
         this.sm.dispatchEvent(Enemy1Sm.EventId.DO);
 
         // damage player if touching
@@ -194,8 +197,23 @@ class Enemy1 extends GameObject
             player.damage(1, this);
         }
 
+        // todo performance - only do once when it happens
         if (player.isDead())
+        {
             this.sm.dispatchEvent(Enemy1Sm.EventId.PLAYER_DEAD);
+        }
+
+        // const debugClosest = true;
+        // if (debugClosest) {
+        //     if (this.playerDist() < 20)
+        //     {
+        //         window.debugEnemy = this;
+        //     }
+        //     else
+        //     {
+        //         // this.destroy();
+        //     }
+        // }
     }
 
     kill()
@@ -219,17 +237,5 @@ class Enemy1 extends GameObject
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
-
-        // const debugClosest = true;
-        // if (debugClosest) {
-        //     if (this.playerDist() < 20)
-        //     {
-        //         window.debugEnemy = this;
-        //     }
-        //     else
-        //     {
-        //         // this.destroy();
-        //     }
-        // }
     }
 }

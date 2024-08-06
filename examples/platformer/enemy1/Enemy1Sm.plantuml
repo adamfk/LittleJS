@@ -4,35 +4,34 @@
 ' Note: StateSmith treats state names and events as case insensitive.
 ' More info: https://github.com/StateSmith/StateSmith/wiki/PlantUML
 
-state PASSIVE {
-    state SLEEPING
+state "$parent_alias" as PA
 
-    state PATROL {
-        state PATROL_MARCH
-        state PATROL_END_DELAY
-        state PATROL_END_HOP
-        ' state PATROL_END_TURN
-        [*] -> PATROL_MARCH
-    }
+state SLEEPING
 
-    state JUMP_AROUND
+state PATROL {
+    state PATROL_MARCH
+    state PATROL_END_DELAY
+    state PATROL_END_HOP
+    ' state PATROL_END_TURN
+    [*] -> PATROL_MARCH
 }
+
+state JUMP_AROUND
 
 state HUNTING
 
-[*] --> PATROL
-' [*] -> SLEEPING
+[*] -> SLEEPING
 
 
 ' ///////////////////////// STATE HANDLERS /////////////////////////
 ' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
 
-PASSIVE --> HUNTING: DAMAGED
+PA --> HUNTING: DAMAGED
 
 SLEEPING: enter / obj.swellSpeed = 2;
 SLEEPING: enter / timer.set(rand(5, 10));
-' SLEEPING -> PATROL: [timer.elapsed()]
-SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
+SLEEPING -> PATROL: [obj.playerDist() <= 10]
+' SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
 
 PATROL: enter / timer.set(rand(5, 10));
 ' PATROL -> SLEEPING: [timer.elapsed()]
@@ -58,7 +57,7 @@ JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
 HUNTING: enter / obj.swellSpeed = 30;
 HUNTING: enter / obj.stallTracker.reset();
 HUNTING: do / obj.stallTracker.update();
-HUNTING: (enter,DAMAGED) / timer.set(10);
+HUNTING: enter / timer.set(10);
 HUNTING: do / obj.doHuntPlayer();
 HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
 
