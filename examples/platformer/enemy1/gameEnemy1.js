@@ -24,7 +24,8 @@ class Enemy1 extends GameObject
         this.sm.vars.obj = this;
         this.spawnPos = pos.copy();
         this.timer = new Timer(rand(20));
-        this.facingX = rand() < .5 ? -1 : 1;
+        this.patrolVec = vec2(0.05,0);
+        this.patrolRange = 7;
 
         this.sm.start();
     }
@@ -46,22 +47,33 @@ class Enemy1 extends GameObject
 
     isPatrolEnd()
     {
-        return this.pos.distance(this.spawnPos) > 5;
+        if (this.willHitTile(this.patrolVec))
+            return true;
+
+        const distanceToSpawn = this.pos.distance(this.spawnPos);
+        const nextDistanceToSpawn = this.pos.add(this.patrolVec).distance(this.spawnPos);
+        const isBeyondPatrolRange = distanceToSpawn >= this.patrolRange;
+        const isMovingAwayFromSpawn = nextDistanceToSpawn >= distanceToSpawn;
+        return isBeyondPatrolRange && isMovingAwayFromSpawn;
+    }
+
+    willHitTile(vec)
+    {
+        // vec = vec.normalize();
+        vec = vec.copy();
+        vec.x += sign(vec.x) * this.size.x/2;
+        const pos = this.pos.add(vec);
+        return tileCollisionTest(pos, this.size);
     }
 
     doPatrolMarch()
     {
-        if (!this.groundObject)
-            return;
+        this.velocity.x = this.patrolVec.x;
+    }
 
-        // march back and forth
-        this.velocity.x = this.facingX * .1;
-        if (this.isPatrolEnd())
-        {
-            this.facingX = -this.facingX;
-            this.velocity.x = this.facingX * .1;
-            this.smallVerticalHop();
-        }
+    patrolTurn()
+    {
+        this.patrolVec.x *= -1;
     }
 
     doHuntPlayer()
@@ -109,7 +121,8 @@ class Enemy1 extends GameObject
 
     smallVerticalHop()
     {
-        this.velocity.y = rand(.1, .2);
+        this.velocity.y = .1;
+        this.velocity.x = 0;
         sound_jump.play(this.pos, .4, 2);
     }
 
@@ -165,5 +178,17 @@ class Enemy1 extends GameObject
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
+
+        const debugClosest = false;
+        if (debugClosest) {
+            if (this.playerDist() < 20)
+            {
+                window.debugEnemy = this;
+            }
+            else
+            {
+                this.destroy();
+            }
+        }
     }
 }

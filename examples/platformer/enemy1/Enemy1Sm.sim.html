@@ -236,6 +236,18 @@ state PASSIVE {
 
                 PATROL_MARCH : do / #123; obj.doPatrolMarch()#59; #125;
 
+                PATROL_END_DELAY
+
+                PATROL_END_DELAY : PATROL_END_DELAY
+
+                PATROL_END_DELAY : enter / #123; obj.timer.set(0.5)#59; #125;
+
+                PATROL_END_HOP
+
+                PATROL_END_HOP : PATROL_END_HOP
+
+                PATROL_END_HOP : enter / #123; obj.smallVerticalHop()#59; #125;
+
                 state "$initial_state" as PATROL.(InitialState)
 
         }
@@ -264,11 +276,13 @@ state "$initial_state" as ROOT.(InitialState)
 
 PASSIVE --> HUNTING : DAMAGED
 
-SLEEPING --> PATROL : do [obj.timer.elapsed()]
-
 SLEEPING --> JUMP_AROUND : do [obj.playerDist() <= 5]
 
-PATROL --> SLEEPING : do [obj.timer.elapsed()]
+PATROL_MARCH --> PATROL_END_DELAY : do [obj.isPatrolEnd()]
+
+PATROL_END_DELAY --> PATROL_END_HOP : do [obj.timer.elapsed()]
+
+PATROL_END_HOP --> PATROL_MARCH : do [obj.groundObject] / #123; obj.patrolTurn()#59; #125;
 
 PATROL.(InitialState) --> PATROL_MARCH
 
@@ -341,12 +355,14 @@ evaluateGuard = null;
         PASSIVE : 2,
         JUMP_AROUND : 3,
         PATROL : 4,
-        PATROL_MARCH : 5,
-        SLEEPING : 6,
+        PATROL_END_DELAY : 5,
+        PATROL_END_HOP : 6,
+        PATROL_MARCH : 7,
+        SLEEPING : 8,
     }
     static { Object.freeze(this.StateId); }
     
-    static StateIdCount = 7;
+    static StateIdCount = 9;
     static { Object.freeze(this.StateIdCount); }
     
     // Used internally by state machine. Feel free to inspect, but don't modify.
@@ -376,20 +392,33 @@ evaluateGuard = null;
             // ROOT.<InitialState> is a pseudo state and cannot have an `enter` trigger.
             
             // ROOT.<InitialState> behavior
-            // uml: / { this.tracer?.edgeTransition("edge9"); } TransitionTo(PATROL)
+            // uml: / { this.tracer?.edgeTransition("edge10"); } TransitionTo(PATROL)
             {
                 // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
                 
-                // Step 2: Transition action: `this.tracer?.edgeTransition("edge9");`.
-                this.tracer?.edgeTransition("edge9");
+                // Step 2: Transition action: `this.tracer?.edgeTransition("edge10");`.
+                this.tracer?.edgeTransition("edge10");
                 
                 // Step 3: Enter/move towards transition target `PATROL`.
                 this.#PASSIVE_enter();
                 this.#PATROL_enter();
                 
-                // Finish transition by calling pseudo state transition function.
-                this.#PATROL_InitialState_transition();
-                return; // event processing immediately stops when a transition finishes. No other behaviors for this state are checked.
+                // PATROL.<InitialState> behavior
+                // uml: / { this.tracer?.edgeTransition("edge5"); } TransitionTo(PATROL_MARCH)
+                {
+                    // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
+                    
+                    // Step 2: Transition action: `this.tracer?.edgeTransition("edge5");`.
+                    this.tracer?.edgeTransition("edge5");
+                    
+                    // Step 3: Enter/move towards transition target `PATROL_MARCH`.
+                    this.#PATROL_MARCH_enter();
+                    
+                    // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+                    this.stateId = Enemy1Sm.StateId.PATROL_MARCH;
+                    // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+                    return;
+                } // end of behavior for PATROL.<InitialState>
             } // end of behavior for ROOT.<InitialState>
         } // end of behavior for ROOT
     }
@@ -496,14 +525,14 @@ evaluateGuard = null;
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge8"); } TransitionTo(JUMP_AROUND)
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge9"); } TransitionTo(JUMP_AROUND)
         if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()"))
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#HUNTING_exit();
             
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge8");`.
-            this.tracer?.edgeTransition("edge8");
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge9");`.
+            this.tracer?.edgeTransition("edge9");
             
             // Step 3: Enter/move towards transition target `JUMP_AROUND`.
             this.#PASSIVE_enter();
@@ -521,13 +550,13 @@ evaluateGuard = null;
         // No ancestor state handles `player_dead` event.
         
         // HUNTING behavior
-        // uml: PLAYER_DEAD / { this.tracer?.edgeTransition("edge7"); } TransitionTo(SLEEPING)
+        // uml: PLAYER_DEAD / { this.tracer?.edgeTransition("edge8"); } TransitionTo(SLEEPING)
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#HUNTING_exit();
             
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge7");`.
-            this.tracer?.edgeTransition("edge7");
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge8");`.
+            this.tracer?.edgeTransition("edge8");
             
             // Step 3: Enter/move towards transition target `SLEEPING`.
             this.#PASSIVE_enter();
@@ -651,14 +680,14 @@ evaluateGuard = null;
         } // end of behavior for JUMP_AROUND
         
         // JUMP_AROUND behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 10") || this.evaluateGuard("obj.playerDist() >= 10")] / { this.tracer?.edgeTransition("edge5"); } TransitionTo(SLEEPING)
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 10") || this.evaluateGuard("obj.playerDist() >= 10")] / { this.tracer?.edgeTransition("edge6"); } TransitionTo(SLEEPING)
         if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() >= 10") || this.evaluateGuard("obj.playerDist() >= 10"))
         {
             // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
             this.#JUMP_AROUND_exit();
             
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge5");`.
-            this.tracer?.edgeTransition("edge5");
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge6");`.
+            this.tracer?.edgeTransition("edge6");
             
             // Step 3: Enter/move towards transition target `SLEEPING`.
             this.#SLEEPING_enter();
@@ -670,14 +699,14 @@ evaluateGuard = null;
         } // end of behavior for JUMP_AROUND
         
         // JUMP_AROUND behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 4") || this.evaluateGuard("obj.playerDist() <= 4")] / { this.tracer?.edgeTransition("edge6"); } TransitionTo(HUNTING)
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 4") || this.evaluateGuard("obj.playerDist() <= 4")] / { this.tracer?.edgeTransition("edge7"); } TransitionTo(HUNTING)
         if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 4") || this.evaluateGuard("obj.playerDist() <= 4"))
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#exitUpToStateHandler(this.#ROOT_exit);
             
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge6");`.
-            this.tracer?.edgeTransition("edge6");
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge7");`.
+            this.tracer?.edgeTransition("edge7");
             
             // Step 3: Enter/move towards transition target `HUNTING`.
             this.#HUNTING_enter();
@@ -698,7 +727,6 @@ evaluateGuard = null;
     {
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#PATROL_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_do;
         
         // PATROL behavior
         // uml: enter / { this.tracer?.enterState('PATROL'); }
@@ -726,51 +754,134 @@ evaluateGuard = null;
         
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#PASSIVE_exit;
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state PATROL_END_DELAY
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #PATROL_END_DELAY_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#PATROL_END_DELAY_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_END_DELAY_do;
+        
+        // PATROL_END_DELAY behavior
+        // uml: enter / { this.tracer?.enterState('PATROL_END_DELAY'); }
+        {
+            // Step 1: execute action `this.tracer?.enterState('PATROL_END_DELAY');`
+            this.tracer?.enterState('PATROL_END_DELAY');
+        } // end of behavior for PATROL_END_DELAY
+        
+        // PATROL_END_DELAY behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.timer.set(0.5);");
+        } // end of behavior for PATROL_END_DELAY
+    }
+    
+    #PATROL_END_DELAY_exit()
+    {
+        // PATROL_END_DELAY behavior
+        // uml: exit / { this.tracer?.exitState('PATROL_END_DELAY'); }
+        {
+            // Step 1: execute action `this.tracer?.exitState('PATROL_END_DELAY');`
+            this.tracer?.exitState('PATROL_END_DELAY');
+        } // end of behavior for PATROL_END_DELAY
+        
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#PATROL_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
     }
     
-    #PATROL_do()
+    #PATROL_END_DELAY_do()
     {
         // No ancestor state handles `do` event.
         
-        // PATROL behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge3"); } TransitionTo(SLEEPING)
+        // PATROL_END_DELAY behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge3"); } TransitionTo(PATROL_END_HOP)
         if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()"))
         {
-            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
-            this.#exitUpToStateHandler(this.#PASSIVE_exit);
+            // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition).
+            this.#PATROL_END_DELAY_exit();
             
             // Step 2: Transition action: `this.tracer?.edgeTransition("edge3");`.
             this.tracer?.edgeTransition("edge3");
             
-            // Step 3: Enter/move towards transition target `SLEEPING`.
-            this.#SLEEPING_enter();
+            // Step 3: Enter/move towards transition target `PATROL_END_HOP`.
+            this.#PATROL_END_HOP_enter();
             
             // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
-            this.stateId = Enemy1Sm.StateId.SLEEPING;
+            this.stateId = Enemy1Sm.StateId.PATROL_END_HOP;
             // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
-        } // end of behavior for PATROL
+        } // end of behavior for PATROL_END_DELAY
     }
     
-    #PATROL_InitialState_transition()
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state PATROL_END_HOP
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #PATROL_END_HOP_enter()
     {
-        // PATROL.<InitialState> behavior
-        // uml: / { this.tracer?.edgeTransition("edge4"); } TransitionTo(PATROL_MARCH)
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#PATROL_END_HOP_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_END_HOP_do;
+        
+        // PATROL_END_HOP behavior
+        // uml: enter / { this.tracer?.enterState('PATROL_END_HOP'); }
         {
-            // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
+            // Step 1: execute action `this.tracer?.enterState('PATROL_END_HOP');`
+            this.tracer?.enterState('PATROL_END_HOP');
+        } // end of behavior for PATROL_END_HOP
+        
+        // PATROL_END_HOP behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.smallVerticalHop();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.smallVerticalHop();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.smallVerticalHop();");
+        } // end of behavior for PATROL_END_HOP
+    }
+    
+    #PATROL_END_HOP_exit()
+    {
+        // PATROL_END_HOP behavior
+        // uml: exit / { this.tracer?.exitState('PATROL_END_HOP'); }
+        {
+            // Step 1: execute action `this.tracer?.exitState('PATROL_END_HOP');`
+            this.tracer?.exitState('PATROL_END_HOP');
+        } // end of behavior for PATROL_END_HOP
+        
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#PATROL_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+    }
+    
+    #PATROL_END_HOP_do()
+    {
+        // No ancestor state handles `do` event.
+        
+        // PATROL_END_HOP behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.groundObject") || this.evaluateGuard("obj.groundObject")] / { this.tracer?.log("⚡ FSM would execute action: " + "obj.patrolTurn();");this.tracer?.edgeTransition("edge4"); } TransitionTo(PATROL_MARCH)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.groundObject") || this.evaluateGuard("obj.groundObject"))
+        {
+            // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition).
+            this.#PATROL_END_HOP_exit();
             
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge4");`.
-            this.tracer?.edgeTransition("edge4");
+            // Step 2: Transition action: `this.tracer?.log("⚡ FSM would execute action: " + "obj.patrolTurn();");this.tracer?.edgeTransition("edge4");`.
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.patrolTurn();");this.tracer?.edgeTransition("edge4");
             
             // Step 3: Enter/move towards transition target `PATROL_MARCH`.
             this.#PATROL_MARCH_enter();
             
             // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
             this.stateId = Enemy1Sm.StateId.PATROL_MARCH;
-            this.#ancestorEventHandler = null;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
-        } // end of behavior for PATROL.<InitialState>
+        } // end of behavior for PATROL_END_HOP
     }
     
     
@@ -810,13 +921,12 @@ evaluateGuard = null;
         
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#PATROL_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_do;  // the next ancestor that handles this event is PATROL
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
     }
     
     #PATROL_MARCH_do()
     {
-        // Setup handler for next ancestor that listens to `do` event.
-        this.#ancestorEventHandler = this.#PATROL_do;
+        // No ancestor state handles `do` event.
         
         // PATROL_MARCH behavior
         // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.doPatrolMarch();"); }
@@ -826,6 +936,25 @@ evaluateGuard = null;
             
             // Step 2: determine if ancestor gets to handle event next.
             // Don't consume special `do` event.
+        } // end of behavior for PATROL_MARCH
+        
+        // PATROL_MARCH behavior
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.isPatrolEnd()") || this.evaluateGuard("obj.isPatrolEnd()")] / { this.tracer?.edgeTransition("edge2"); } TransitionTo(PATROL_END_DELAY)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.isPatrolEnd()") || this.evaluateGuard("obj.isPatrolEnd()"))
+        {
+            // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition).
+            this.#PATROL_MARCH_exit();
+            
+            // Step 2: Transition action: `this.tracer?.edgeTransition("edge2");`.
+            this.tracer?.edgeTransition("edge2");
+            
+            // Step 3: Enter/move towards transition target `PATROL_END_DELAY`.
+            this.#PATROL_END_DELAY_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.PATROL_END_DELAY;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
         } // end of behavior for PATROL_MARCH
     }
     
@@ -881,32 +1010,14 @@ evaluateGuard = null;
         // No ancestor state handles `do` event.
         
         // SLEEPING behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()")] / { this.tracer?.edgeTransition("edge1"); } TransitionTo(PATROL)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.timer.elapsed()") || this.evaluateGuard("obj.timer.elapsed()"))
+        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 5") || this.evaluateGuard("obj.playerDist() <= 5")] / { this.tracer?.edgeTransition("edge1"); } TransitionTo(JUMP_AROUND)
+        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 5") || this.evaluateGuard("obj.playerDist() <= 5"))
         {
             // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
             this.#SLEEPING_exit();
             
             // Step 2: Transition action: `this.tracer?.edgeTransition("edge1");`.
             this.tracer?.edgeTransition("edge1");
-            
-            // Step 3: Enter/move towards transition target `PATROL`.
-            this.#PATROL_enter();
-            
-            // Finish transition by calling pseudo state transition function.
-            this.#PATROL_InitialState_transition();
-            return; // event processing immediately stops when a transition finishes. No other behaviors for this state are checked.
-        } // end of behavior for SLEEPING
-        
-        // SLEEPING behavior
-        // uml: do [this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 5") || this.evaluateGuard("obj.playerDist() <= 5")] / { this.tracer?.edgeTransition("edge2"); } TransitionTo(JUMP_AROUND)
-        if (this.tracer?.log("🛡️ User evaluating guard: " + "obj.playerDist() <= 5") || this.evaluateGuard("obj.playerDist() <= 5"))
-        {
-            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
-            this.#SLEEPING_exit();
-            
-            // Step 2: Transition action: `this.tracer?.edgeTransition("edge2");`.
-            this.tracer?.edgeTransition("edge2");
             
             // Step 3: Enter/move towards transition target `JUMP_AROUND`.
             this.#JUMP_AROUND_enter();
@@ -928,6 +1039,8 @@ evaluateGuard = null;
             case Enemy1Sm.StateId.PASSIVE: return "PASSIVE";
             case Enemy1Sm.StateId.JUMP_AROUND: return "JUMP_AROUND";
             case Enemy1Sm.StateId.PATROL: return "PATROL";
+            case Enemy1Sm.StateId.PATROL_END_DELAY: return "PATROL_END_DELAY";
+            case Enemy1Sm.StateId.PATROL_END_HOP: return "PATROL_END_HOP";
             case Enemy1Sm.StateId.PATROL_MARCH: return "PATROL_MARCH";
             case Enemy1Sm.StateId.SLEEPING: return "SLEEPING";
             default: return "?";

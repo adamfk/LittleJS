@@ -9,7 +9,9 @@ state PASSIVE {
 
     state PATROL {
         state PATROL_MARCH
-        ' state PATROL_HOP
+        state PATROL_END_DELAY
+        state PATROL_END_HOP
+        ' state PATROL_END_TURN
         [*] -> PATROL_MARCH
     }
 
@@ -29,13 +31,20 @@ PASSIVE --> HUNTING: DAMAGED
 
 SLEEPING: enter / obj.swellSpeed = 2;
 SLEEPING: enter / obj.timer.set(rand(5, 10));
-SLEEPING -> PATROL: [obj.timer.elapsed()]
+' SLEEPING -> PATROL: [obj.timer.elapsed()]
 SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
 
 PATROL: enter / obj.timer.set(rand(5, 10));
-PATROL -> SLEEPING: [obj.timer.elapsed()]
+' PATROL -> SLEEPING: [obj.timer.elapsed()]
 PATROL_MARCH: enter / obj.swellSpeed = 4;
 PATROL_MARCH: do / obj.doPatrolMarch();
+PATROL_MARCH --> PATROL_END_DELAY: [obj.isPatrolEnd()]
+
+PATROL_END_DELAY: enter / obj.timer.set(0.5);
+PATROL_END_DELAY --> PATROL_END_HOP: [obj.timer.elapsed()]
+
+PATROL_END_HOP: enter / obj.smallVerticalHop();
+PATROL_END_HOP --> PATROL_MARCH: [obj.groundObject] / obj.patrolTurn();
 
 HUNTING --> SLEEPING: PLAYER_DEAD
 
