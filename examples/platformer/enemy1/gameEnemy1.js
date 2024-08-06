@@ -22,8 +22,11 @@ class Enemy1 extends GameObject
         this.setCollision(true, false);
         this.sm = new Enemy1Sm();
         this.sm.vars.obj = this;
+        this.spawnPos = pos.copy();
+        this.timer = new Timer(rand(20));
+        this.facingX = rand() < .5 ? -1 : 1;
+
         this.sm.start();
-        this.huntingTimer = new Timer(rand(20));
     }
 
     playerDist()
@@ -38,6 +41,26 @@ class Enemy1 extends GameObject
         {
             this.velocity = vec2(rand(.1,-.1), rand(.4, .2));
             sound_jump.play(this.pos, .4, 2);
+        }
+    }
+
+    isPatrolEnd()
+    {
+        return this.pos.distance(this.spawnPos) > 5;
+    }
+
+    doPatrolMarch()
+    {
+        if (!this.groundObject)
+            return;
+
+        // march back and forth
+        this.velocity.x = this.facingX * .1;
+        if (this.isPatrolEnd())
+        {
+            this.facingX = -this.facingX;
+            this.velocity.x = this.facingX * .1;
+            this.smallVerticalHop();
         }
     }
 
@@ -81,6 +104,12 @@ class Enemy1 extends GameObject
         const jumpXSpeed = rand(.07, .2);
         this.velocity = vecToPlayer.multiply(vec2(jumpXSpeed, 0));
         this.velocity.y = jumpYSpeed;
+        sound_jump.play(this.pos, .4, 2);
+    }
+
+    smallVerticalHop()
+    {
+        this.velocity.y = rand(.1, .2);
         sound_jump.play(this.pos, .4, 2);
     }
 

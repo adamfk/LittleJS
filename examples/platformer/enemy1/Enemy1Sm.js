@@ -18,14 +18,16 @@ class Enemy1Sm
     static StateId = 
     {
         ROOT : 0,
-        AWAKE : 1,
-        HUNTING : 2,
+        HUNTING : 1,
+        PASSIVE : 2,
         JUMP_AROUND : 3,
-        SLEEPING : 4,
+        PATROL : 4,
+        PATROL_MARCH : 5,
+        SLEEPING : 6,
     }
     static { Object.freeze(this.StateId); }
     
-    static StateIdCount = 5;
+    static StateIdCount = 7;
     static { Object.freeze(this.StateIdCount); }
     
     // Used internally by state machine. Feel free to inspect, but don't modify.
@@ -60,19 +62,19 @@ class Enemy1Sm
             // ROOT.<InitialState> is a pseudo state and cannot have an `enter` trigger.
             
             // ROOT.<InitialState> behavior
-            // uml: TransitionTo(SLEEPING)
+            // uml: TransitionTo(PATROL)
             {
                 // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
                 
                 // Step 2: Transition action: ``.
                 
-                // Step 3: Enter/move towards transition target `SLEEPING`.
-                this.#SLEEPING_enter();
+                // Step 3: Enter/move towards transition target `PATROL`.
+                this.#PASSIVE_enter();
+                this.#PATROL_enter();
                 
-                // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
-                this.stateId = Enemy1Sm.StateId.SLEEPING;
-                // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
-                return;
+                // Finish transition by calling pseudo state transition function.
+                this.#PATROL_InitialState_transition();
+                return; // event processing immediately stops when a transition finishes. No other behaviors for this state are checked.
             } // end of behavior for ROOT.<InitialState>
         } // end of behavior for ROOT
     }
@@ -117,47 +119,6 @@ class Enemy1Sm
     
     
     ////////////////////////////////////////////////////////////////////////////////
-    // event handlers for state AWAKE
-    ////////////////////////////////////////////////////////////////////////////////
-    
-    #AWAKE_enter()
-    {
-        // setup trigger/event handlers
-        this.#currentStateExitHandler = this.#AWAKE_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = this.#AWAKE_player_dead;
-    }
-    
-    #AWAKE_exit()
-    {
-        // adjust function pointers for this state's exit
-        this.#currentStateExitHandler = this.#ROOT_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = null;  // no ancestor listens to this event
-    }
-    
-    #AWAKE_player_dead()
-    {
-        // No ancestor state handles `player_dead` event.
-        
-        // AWAKE behavior
-        // uml: PLAYER_DEAD TransitionTo(SLEEPING)
-        {
-            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
-            this.#exitUpToStateHandler(this.#ROOT_exit);
-            
-            // Step 2: Transition action: ``.
-            
-            // Step 3: Enter/move towards transition target `SLEEPING`.
-            this.#SLEEPING_enter();
-            
-            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
-            this.stateId = Enemy1Sm.StateId.SLEEPING;
-            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
-            return;
-        } // end of behavior for AWAKE
-    }
-    
-    
-    ////////////////////////////////////////////////////////////////////////////////
     // event handlers for state HUNTING
     ////////////////////////////////////////////////////////////////////////////////
     
@@ -166,6 +127,7 @@ class Enemy1Sm
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#HUNTING_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#HUNTING_do;
+        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = this.#HUNTING_player_dead;
         
         // HUNTING behavior
         // uml: enter / { obj.swellSpeed = 30; }
@@ -175,18 +137,19 @@ class Enemy1Sm
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: enter / { obj.huntingTimer.set(10); }
+        // uml: enter / { obj.timer.set(10); }
         {
-            // Step 1: execute action `obj.huntingTimer.set(10);`
-            this.vars.obj.huntingTimer.set(10);
+            // Step 1: execute action `obj.timer.set(10);`
+            this.vars.obj.timer.set(10);
         } // end of behavior for HUNTING
     }
     
     #HUNTING_exit()
     {
         // adjust function pointers for this state's exit
-        this.#currentStateExitHandler = this.#AWAKE_exit;
+        this.#currentStateExitHandler = this.#ROOT_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+        this.#currentEventHandlers[Enemy1Sm.EventId.PLAYER_DEAD] = null;  // no ancestor listens to this event
     }
     
     #HUNTING_do()
@@ -204,15 +167,16 @@ class Enemy1Sm
         } // end of behavior for HUNTING
         
         // HUNTING behavior
-        // uml: do [obj.huntingTimer.elapsed()] TransitionTo(JUMP_AROUND)
-        if (this.vars.obj.huntingTimer.elapsed())
+        // uml: do [obj.timer.elapsed()] TransitionTo(JUMP_AROUND)
+        if (this.vars.obj.timer.elapsed())
         {
-            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             this.#HUNTING_exit();
             
             // Step 2: Transition action: ``.
             
             // Step 3: Enter/move towards transition target `JUMP_AROUND`.
+            this.#PASSIVE_enter();
             this.#JUMP_AROUND_enter();
             
             // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
@@ -220,6 +184,70 @@ class Enemy1Sm
             // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
         } // end of behavior for HUNTING
+    }
+    
+    #HUNTING_player_dead()
+    {
+        // No ancestor state handles `player_dead` event.
+        
+        // HUNTING behavior
+        // uml: PLAYER_DEAD TransitionTo(SLEEPING)
+        {
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            this.#HUNTING_exit();
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `SLEEPING`.
+            this.#PASSIVE_enter();
+            this.#SLEEPING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.SLEEPING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for HUNTING
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state PASSIVE
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #PASSIVE_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#PASSIVE_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = this.#PASSIVE_damaged;
+    }
+    
+    #PASSIVE_exit()
+    {
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#ROOT_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = null;  // no ancestor listens to this event
+    }
+    
+    #PASSIVE_damaged()
+    {
+        // No ancestor state handles `damaged` event.
+        
+        // PASSIVE behavior
+        // uml: DAMAGED TransitionTo(HUNTING)
+        {
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            this.#exitUpToStateHandler(this.#ROOT_exit);
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `HUNTING`.
+            this.#HUNTING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.HUNTING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for PASSIVE
     }
     
     
@@ -231,7 +259,6 @@ class Enemy1Sm
     {
         // setup trigger/event handlers
         this.#currentStateExitHandler = this.#JUMP_AROUND_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = this.#JUMP_AROUND_damaged;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#JUMP_AROUND_do;
         
         // JUMP_AROUND behavior
@@ -245,31 +272,8 @@ class Enemy1Sm
     #JUMP_AROUND_exit()
     {
         // adjust function pointers for this state's exit
-        this.#currentStateExitHandler = this.#AWAKE_exit;
-        this.#currentEventHandlers[Enemy1Sm.EventId.DAMAGED] = null;  // no ancestor listens to this event
+        this.#currentStateExitHandler = this.#PASSIVE_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
-    }
-    
-    #JUMP_AROUND_damaged()
-    {
-        // No ancestor state handles `damaged` event.
-        
-        // JUMP_AROUND behavior
-        // uml: DAMAGED TransitionTo(HUNTING)
-        {
-            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
-            this.#JUMP_AROUND_exit();
-            
-            // Step 2: Transition action: ``.
-            
-            // Step 3: Enter/move towards transition target `HUNTING`.
-            this.#HUNTING_enter();
-            
-            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
-            this.stateId = Enemy1Sm.StateId.HUNTING;
-            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
-            return;
-        } // end of behavior for JUMP_AROUND
     }
     
     #JUMP_AROUND_do()
@@ -290,8 +294,8 @@ class Enemy1Sm
         // uml: do [obj.playerDist() >= 10] TransitionTo(SLEEPING)
         if (this.vars.obj.playerDist() >= 10)
         {
-            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
-            this.#exitUpToStateHandler(this.#ROOT_exit);
+            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
+            this.#JUMP_AROUND_exit();
             
             // Step 2: Transition action: ``.
             
@@ -308,8 +312,8 @@ class Enemy1Sm
         // uml: do [obj.playerDist() <= 4] TransitionTo(HUNTING)
         if (this.vars.obj.playerDist() <= 4)
         {
-            // Step 1: Exit states until we reach `AWAKE` state (Least Common Ancestor for transition).
-            this.#JUMP_AROUND_exit();
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            this.#exitUpToStateHandler(this.#ROOT_exit);
             
             // Step 2: Transition action: ``.
             
@@ -321,6 +325,116 @@ class Enemy1Sm
             // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
             return;
         } // end of behavior for JUMP_AROUND
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state PATROL
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #PATROL_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#PATROL_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_do;
+        
+        // PATROL behavior
+        // uml: enter / { obj.timer.set(rand(5, 10)); }
+        {
+            // Step 1: execute action `obj.timer.set(rand(5, 10));`
+            this.vars.obj.timer.set(rand(5, 10));
+        } // end of behavior for PATROL
+    }
+    
+    #PATROL_exit()
+    {
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#PASSIVE_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
+    }
+    
+    #PATROL_do()
+    {
+        // No ancestor state handles `do` event.
+        
+        // PATROL behavior
+        // uml: do [obj.timer.elapsed()] TransitionTo(SLEEPING)
+        if (this.vars.obj.timer.elapsed())
+        {
+            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
+            this.#exitUpToStateHandler(this.#PASSIVE_exit);
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `SLEEPING`.
+            this.#SLEEPING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.SLEEPING;
+            // No ancestor handles event. Can skip nulling `ancestorEventHandler`.
+            return;
+        } // end of behavior for PATROL
+    }
+    
+    #PATROL_InitialState_transition()
+    {
+        // PATROL.<InitialState> behavior
+        // uml: TransitionTo(PATROL_MARCH)
+        {
+            // Step 1: Exit states until we reach `PATROL` state (Least Common Ancestor for transition). Already at LCA, no exiting required.
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `PATROL_MARCH`.
+            this.#PATROL_MARCH_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            this.stateId = Enemy1Sm.StateId.PATROL_MARCH;
+            this.#ancestorEventHandler = null;
+            return;
+        } // end of behavior for PATROL.<InitialState>
+    }
+    
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // event handlers for state PATROL_MARCH
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    #PATROL_MARCH_enter()
+    {
+        // setup trigger/event handlers
+        this.#currentStateExitHandler = this.#PATROL_MARCH_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_MARCH_do;
+        
+        // PATROL_MARCH behavior
+        // uml: enter / { obj.swellSpeed = 4; }
+        {
+            // Step 1: execute action `obj.swellSpeed = 4;`
+            this.vars.obj.swellSpeed = 4;
+        } // end of behavior for PATROL_MARCH
+    }
+    
+    #PATROL_MARCH_exit()
+    {
+        // adjust function pointers for this state's exit
+        this.#currentStateExitHandler = this.#PATROL_exit;
+        this.#currentEventHandlers[Enemy1Sm.EventId.DO] = this.#PATROL_do;  // the next ancestor that handles this event is PATROL
+    }
+    
+    #PATROL_MARCH_do()
+    {
+        // Setup handler for next ancestor that listens to `do` event.
+        this.#ancestorEventHandler = this.#PATROL_do;
+        
+        // PATROL_MARCH behavior
+        // uml: do / { obj.doPatrolMarch(); }
+        {
+            // Step 1: execute action `obj.doPatrolMarch();`
+            this.vars.obj.doPatrolMarch();
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for PATROL_MARCH
     }
     
     
@@ -340,12 +454,19 @@ class Enemy1Sm
             // Step 1: execute action `obj.swellSpeed = 2;`
             this.vars.obj.swellSpeed = 2;
         } // end of behavior for SLEEPING
+        
+        // SLEEPING behavior
+        // uml: enter / { obj.timer.set(rand(5, 10)); }
+        {
+            // Step 1: execute action `obj.timer.set(rand(5, 10));`
+            this.vars.obj.timer.set(rand(5, 10));
+        } // end of behavior for SLEEPING
     }
     
     #SLEEPING_exit()
     {
         // adjust function pointers for this state's exit
-        this.#currentStateExitHandler = this.#ROOT_exit;
+        this.#currentStateExitHandler = this.#PASSIVE_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
     }
     
@@ -354,16 +475,32 @@ class Enemy1Sm
         // No ancestor state handles `do` event.
         
         // SLEEPING behavior
-        // uml: do [obj.playerDist() <= 8] TransitionTo(JUMP_AROUND)
-        if (this.vars.obj.playerDist() <= 8)
+        // uml: do [obj.timer.elapsed()] TransitionTo(PATROL)
+        if (this.vars.obj.timer.elapsed())
         {
-            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
+            this.#SLEEPING_exit();
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `PATROL`.
+            this.#PATROL_enter();
+            
+            // Finish transition by calling pseudo state transition function.
+            this.#PATROL_InitialState_transition();
+            return; // event processing immediately stops when a transition finishes. No other behaviors for this state are checked.
+        } // end of behavior for SLEEPING
+        
+        // SLEEPING behavior
+        // uml: do [obj.playerDist() <= 5] TransitionTo(JUMP_AROUND)
+        if (this.vars.obj.playerDist() <= 5)
+        {
+            // Step 1: Exit states until we reach `PASSIVE` state (Least Common Ancestor for transition).
             this.#SLEEPING_exit();
             
             // Step 2: Transition action: ``.
             
             // Step 3: Enter/move towards transition target `JUMP_AROUND`.
-            this.#AWAKE_enter();
             this.#JUMP_AROUND_enter();
             
             // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
@@ -379,9 +516,11 @@ class Enemy1Sm
         switch (id)
         {
             case Enemy1Sm.StateId.ROOT: return "ROOT";
-            case Enemy1Sm.StateId.AWAKE: return "AWAKE";
             case Enemy1Sm.StateId.HUNTING: return "HUNTING";
+            case Enemy1Sm.StateId.PASSIVE: return "PASSIVE";
             case Enemy1Sm.StateId.JUMP_AROUND: return "JUMP_AROUND";
+            case Enemy1Sm.StateId.PATROL: return "PATROL";
+            case Enemy1Sm.StateId.PATROL_MARCH: return "PATROL_MARCH";
             case Enemy1Sm.StateId.SLEEPING: return "SLEEPING";
             default: return "?";
         }

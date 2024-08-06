@@ -4,34 +4,50 @@
 ' Note: StateSmith treats state names and events as case insensitive.
 ' More info: https://github.com/StateSmith/StateSmith/wiki/PlantUML
 
-state SLEEPING
+state PASSIVE {
+    state SLEEPING
 
-state AWAKE {
+    state PATROL {
+        state PATROL_MARCH
+        ' state PATROL_HOP
+        [*] -> PATROL_MARCH
+    }
+
     state JUMP_AROUND
-    state HUNTING
 }
 
-[*] -> SLEEPING
+state HUNTING
+
+[*] --> PATROL
+' [*] -> SLEEPING
 
 
 ' ///////////////////////// STATE HANDLERS /////////////////////////
 ' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
 
-SLEEPING: enter / obj.swellSpeed = 2;
-SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 8]
+PASSIVE --> HUNTING: DAMAGED
 
-AWAKE -up-> SLEEPING: PLAYER_DEAD
+SLEEPING: enter / obj.swellSpeed = 2;
+SLEEPING: enter / obj.timer.set(rand(5, 10));
+SLEEPING -> PATROL: [obj.timer.elapsed()]
+SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
+
+PATROL: enter / obj.timer.set(rand(5, 10));
+PATROL -> SLEEPING: [obj.timer.elapsed()]
+PATROL_MARCH: enter / obj.swellSpeed = 4;
+PATROL_MARCH: do / obj.doPatrolMarch();
+
+HUNTING --> SLEEPING: PLAYER_DEAD
 
 JUMP_AROUND: enter / obj.swellSpeed = 8;
 JUMP_AROUND: do / obj.jumpAround();
 JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
-JUMP_AROUND --> HUNTING: DAMAGED
-JUMP_AROUND --> HUNTING: [obj.playerDist() <= 4]
+JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
 
 HUNTING: enter / obj.swellSpeed = 30;
-HUNTING: enter/ obj.huntingTimer.set(10);
+HUNTING: enter/ obj.timer.set(10);
 HUNTING: do / obj.doHuntPlayer();
-HUNTING --> JUMP_AROUND: [obj.huntingTimer.elapsed()]
+HUNTING -l-> JUMP_AROUND: [obj.timer.elapsed()]
 
 
 ' //////////////////////// StateSmith config ////////////////////////
