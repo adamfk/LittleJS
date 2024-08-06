@@ -153,6 +153,13 @@ class Enemy1Sm
         } // end of behavior for HUNTING
         
         // HUNTING behavior
+        // uml: enter / { obj.stallTracker.reset(); }
+        {
+            // Step 1: execute action `obj.stallTracker.reset();`
+            this.vars.obj.stallTracker.reset();
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
         // uml: (enter, DAMAGED) / { timer.set(10); }
         {
             // Step 1: execute action `timer.set(10);`
@@ -187,6 +194,16 @@ class Enemy1Sm
     #HUNTING_do()
     {
         // No ancestor state handles `do` event.
+        
+        // HUNTING behavior
+        // uml: do / { obj.stallTracker.update(); }
+        {
+            // Step 1: execute action `obj.stallTracker.update();`
+            this.vars.obj.stallTracker.update();
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for HUNTING
         
         // HUNTING behavior
         // uml: do / { obj.doHuntPlayer(); }
@@ -499,6 +516,13 @@ class Enemy1Sm
             // Step 1: execute action `obj.swellSpeed = 4;`
             this.vars.obj.swellSpeed = 4;
         } // end of behavior for PATROL_MARCH
+        
+        // PATROL_MARCH behavior
+        // uml: enter / { obj.stallTracker.reset(); }
+        {
+            // Step 1: execute action `obj.stallTracker.reset();`
+            this.vars.obj.stallTracker.reset();
+        } // end of behavior for PATROL_MARCH
     }
     
     #PATROL_MARCH_exit()
@@ -511,6 +535,16 @@ class Enemy1Sm
     #PATROL_MARCH_do()
     {
         // No ancestor state handles `do` event.
+        
+        // PATROL_MARCH behavior
+        // uml: do / { obj.stallTracker.update(); }
+        {
+            // Step 1: execute action `obj.stallTracker.update();`
+            this.vars.obj.stallTracker.update();
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for PATROL_MARCH
         
         // PATROL_MARCH behavior
         // uml: do / { obj.doPatrolMarch(); }

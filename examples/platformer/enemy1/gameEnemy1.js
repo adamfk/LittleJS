@@ -1,5 +1,47 @@
 'use strict';
 
+class StallTracker
+{
+    stallCount;
+    startingPos;
+
+    constructor(gameObject)
+    {
+        this.gameObject = gameObject;
+        this.mask = vec2(1,0); // don't care about y for now
+
+        this.reset();
+    }
+
+    /**
+     * @param {Vector2?} startingPos
+     */
+    reset(startingPos)
+    {
+        this.stallCount = 0;
+        this.startingPos = startingPos ?? this.getMaskedPosition(this.gameObject);
+    }
+    
+    getMaskedPosition(gameObject) {
+        return gameObject.pos.multiply(this.mask);
+    }
+
+    update()
+    {
+        const pos = this.getMaskedPosition(this.gameObject);
+        if (pos.distance(this.startingPos) > 0.01)
+        {
+            this.reset(pos);
+        }
+        else
+        {
+            this.stallCount++;
+        }
+    }
+}
+
+
+
 class Enemy1 extends GameObject 
 {
     constructor(pos)
@@ -17,6 +59,7 @@ class Enemy1 extends GameObject
         this.spawnPos = pos.copy();
         this.patrolVec = vec2(0.05,0);
         this.patrolRange = 7;
+        this.stallTracker = new StallTracker(this);
 
         this.sm.start();
     }
@@ -38,8 +81,11 @@ class Enemy1 extends GameObject
 
     isPatrolEnd()
     {
-        if (this.willHitTile(this.patrolVec))
+        if (this.stallTracker.stallCount > 5)
             return true;
+
+        // if (this.willHitTile(this.patrolVec))
+        //     return true;
 
         // TODO check if will fall off edge
 
@@ -80,10 +126,12 @@ class Enemy1 extends GameObject
         }
         else
         {
+            const scaledStallCount = this.stallTracker.stallCount / 60 / 2 * 0.1;
+
             // on ground. randomly jump towards player
-            if (rand() < 0.01)
+            if (rand() < 0.01 + scaledStallCount)
             {
-                this.jumpTowardsPlayer(vecToPlayer);
+                this.jumpTowardsPlayer(vecToPlayer, scaledStallCount);
             }
             else
             {
@@ -99,13 +147,14 @@ class Enemy1 extends GameObject
 
     /**
      * @param {vec2?} vecToPlayer 
+     * @param {number} jumpBoost - additional jump speed for when enemy is stuck/stalled
      */
-    jumpTowardsPlayer(vecToPlayer)
+    jumpTowardsPlayer(vecToPlayer, jumpBoost = 0)
     {
         if (!vecToPlayer)
             vecToPlayer = this.normVecToPlayer();
 
-        const jumpYSpeed = rand(.4, .2);
+        const jumpYSpeed = clamp(rand(.4, .2) + jumpBoost, 0, 0.4);
         const jumpXSpeed = rand(.07, .2);
         this.velocity = vecToPlayer.multiply(vec2(jumpXSpeed, 0));
         this.velocity.y = jumpYSpeed;
@@ -165,23 +214,22 @@ class Enemy1 extends GameObject
         // bounce by changing size
         const bounceTime = this.swellTimer * this.swellSpeed;
         this.drawSize = vec2(1-.1*Math.sin(bounceTime), 1+.1*Math.sin(bounceTime));
-        // this.drawSize = vec2(1,1);
 
         // make bottom flush
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
 
-        const debugClosest = true;
-        if (debugClosest) {
-            if (this.playerDist() < 20)
-            {
-                window.debugEnemy = this;
-            }
-            else
-            {
-                // this.destroy();
-            }
-        }
+        // const debugClosest = true;
+        // if (debugClosest) {
+        //     if (this.playerDist() < 20)
+        //     {
+        //         window.debugEnemy = this;
+        //     }
+        //     else
+        //     {
+        //         // this.destroy();
+        //     }
+        // }
     }
 }

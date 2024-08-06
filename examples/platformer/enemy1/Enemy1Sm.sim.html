@@ -234,6 +234,10 @@ state PASSIVE {
 
                 PATROL_MARCH : enter / #123; obj.swellSpeed = 4#59; #125;
 
+                PATROL_MARCH : enter / #123; obj.stallTracker.reset()#59; #125;
+
+                PATROL_MARCH : do / #123; obj.stallTracker.update()#59; #125;
+
                 PATROL_MARCH : do / #123; obj.doPatrolMarch()#59; #125;
 
                 PATROL_END_DELAY
@@ -267,6 +271,10 @@ HUNTING
 HUNTING : HUNTING
 
 HUNTING : enter / #123; obj.swellSpeed = 30#59; #125;
+
+HUNTING : enter / #123; obj.stallTracker.reset()#59; #125;
+
+HUNTING : do / #123; obj.stallTracker.update()#59; #125;
 
 HUNTING : (enter, DAMAGED) / #123; timer.set(10)#59; #125;
 
@@ -489,6 +497,13 @@ evaluateGuard = null;
         } // end of behavior for HUNTING
         
         // HUNTING behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();");
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
         // uml: (enter, DAMAGED) / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);"); }
         {
             // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(10);");`
@@ -530,6 +545,16 @@ evaluateGuard = null;
     #HUNTING_do()
     {
         // No ancestor state handles `do` event.
+        
+        // HUNTING behavior
+        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();");
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for HUNTING
         
         // HUNTING behavior
         // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.doHuntPlayer();"); }
@@ -925,6 +950,13 @@ evaluateGuard = null;
             // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 4;");`
             this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 4;");
         } // end of behavior for PATROL_MARCH
+        
+        // PATROL_MARCH behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.reset();");
+        } // end of behavior for PATROL_MARCH
     }
     
     #PATROL_MARCH_exit()
@@ -944,6 +976,16 @@ evaluateGuard = null;
     #PATROL_MARCH_do()
     {
         // No ancestor state handles `do` event.
+        
+        // PATROL_MARCH behavior
+        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.stallTracker.update();");
+            
+            // Step 2: determine if ancestor gets to handle event next.
+            // Don't consume special `do` event.
+        } // end of behavior for PATROL_MARCH
         
         // PATROL_MARCH behavior
         // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.doPatrolMarch();"); }

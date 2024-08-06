@@ -37,6 +37,8 @@ SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
 PATROL: enter / timer.set(rand(5, 10));
 ' PATROL -> SLEEPING: [timer.elapsed()]
 PATROL_MARCH: enter / obj.swellSpeed = 4;
+PATROL_MARCH: enter / obj.stallTracker.reset();
+PATROL_MARCH: do / obj.stallTracker.update();
 PATROL_MARCH: do / obj.doPatrolMarch();
 PATROL_MARCH --> PATROL_END_DELAY: [obj.isPatrolEnd()]
 
@@ -54,6 +56,8 @@ JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
 JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
 
 HUNTING: enter / obj.swellSpeed = 30;
+HUNTING: enter / obj.stallTracker.reset();
+HUNTING: do / obj.stallTracker.update();
 HUNTING: (enter,DAMAGED) / timer.set(10);
 HUNTING: do / obj.doHuntPlayer();
 HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
