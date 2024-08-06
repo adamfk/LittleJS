@@ -71,7 +71,7 @@ function min(valueA, valueB) { return Math.min(valueA, valueB); }
  *  @memberof Utilities */
 function max(valueA, valueB) { return Math.max(valueA, valueB); }
 
-/** Returns the sign of value passed in (also returns 1 if 0)
+/** Returns the sign of value passed in
  *  @param {Number} value
  *  @return {Number}
  *  @memberof Utilities */
@@ -118,7 +118,7 @@ function lerp(percent, valueA, valueB) { return valueA + clamp(percent) * (value
 function distanceWrap(valueA, valueB, wrapSize=1)
 { const d = (valueA - valueB) % wrapSize; return d*2 % wrapSize - d; }
 
-/** Linearly interpolates between values passed in with wrappping
+/** Linearly interpolates between values passed in with wrapping
  *  @param {Number} percent
  *  @param {Number} valueA
  *  @param {Number} valueB
@@ -135,7 +135,7 @@ function lerpWrap(percent, valueA, valueB, wrapSize=1)
  *  @memberof Utilities */
 function distanceAngle(angleA, angleB) { return distanceWrap(angleA, angleB, 2*PI); }
 
-/** Linearly interpolates between the angles passed in with wrappping
+/** Linearly interpolates between the angles passed in with wrapping
  *  @param {Number} percent
  *  @param {Number} angleA
  *  @param {Number} angleB
@@ -877,7 +877,7 @@ let tileSizeDefault = vec2(16);
  *  @type {Number}
  *  @default
  *  @memberof Settings */
-let tileFixBleedScale = .3;
+let tileFixBleedScale = .1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Object settings
@@ -888,7 +888,7 @@ let tileFixBleedScale = .3;
  *  @memberof Settings */
 let enablePhysicsSolver = true;
 
-/** Default object mass for collison calcuations (how heavy objects are)
+/** Default object mass for collision calcuations (how heavy objects are)
  *  @type {Number}
  *  @default
  *  @memberof Settings */
@@ -971,7 +971,7 @@ let touchGamepadEnable = false;
  *  @memberof Settings */
 let touchGamepadAnalog = true;
 
-/** Size of virutal gamepad for touch devices in pixels
+/** Size of virtual gamepad for touch devices in pixels
  *  @type {Number}
  *  @default
  *  @memberof Settings */
@@ -1258,7 +1258,7 @@ function setDebugKey(key) { debugKey = key; }
  * - Automatically adds self to object list
  * - Will be updated and rendered each frame
  * - Renders as a sprite from a tilesheet by default
- * - Can have color and addtive color applied
+ * - Can have color and additive color applied
  * - 2D Physics and collision system
  * - Sorted by renderOrder
  * - Objects can have children attached
@@ -1537,7 +1537,7 @@ class EngineObject
     }
     
     /** Destroy this object, destroy it's children, detach it's parent, and mark it for removal */
-    destroy()             
+    destroy()
     { 
         if (this.destroyed)
             return;
@@ -1726,13 +1726,9 @@ function tile(pos=vec2(), size=tileSizeDefault, textureIndex=0)
     if (typeof pos === 'number')
     {
         const textureInfo = textureInfos[textureIndex];
-        if (textureInfo)
-        {
-            const cols = textureInfo.size.x / size.x |0;
-            pos = vec2((pos%cols)*size.x, (pos/cols|0)*size.y);
-        }
-        else
-            pos = vec2();
+        ASSERT(textureInfo, 'Texture not loaded');
+        const cols = textureInfo.size.x / size.x |0;
+        pos = vec2((pos%cols)*size.x, (pos/cols|0)*size.y);
     }
 
     // return a tile info object
@@ -1820,6 +1816,11 @@ function worldToScreen(worldPos)
         (worldPos.y - cameraPos.y) * -cameraScale + mainCanvasSize.y/2 - .5
     );
 }
+
+/** Get the camera's visible area in world space
+ *  @return {Vector2}
+ *  @memberof Draw */
+function getCameraSize() { return mainCanvasSize.scale(1/cameraScale); }
 
 /** Draw textured tile centered in world space, with color applied if using WebGL
  *  @param {Vector2} pos                        - Center of the tile in world space
@@ -1909,21 +1910,6 @@ function drawTile(pos, size=vec2(1), tileInfo, color=new Color,
 function drawRect(pos, size, color, angle, useWebGL, screenSpace, context)
 { 
     drawTile(pos, size, undefined, color, angle, false, undefined, useWebGL, screenSpace, context); 
-}
-
-/** Draw colored polygon using passed in points
- *  @param {Array}   points - Array of Vector2 points
- *  @param {Color}   [color=(1,1,1,1)]
- *  @param {Boolean} [screenSpace=false]
- *  @param {CanvasRenderingContext2D} [context=mainContext]
- *  @memberof Draw */
-function drawPoly(points, color=new Color, screenSpace, context=mainContext)
-{
-    context.fillStyle = color.toString();
-    context.beginPath();
-    for (const point of screenSpace ? points : points.map(worldToScreen))
-        context.lineTo(point.x, point.y);
-    context.fill();
 }
 
 /** Draw colored line between two points
@@ -2378,7 +2364,12 @@ function gamepadsUpdate()
         }
     }
 
-    if (!gamepadsEnable || !navigator || !navigator.getGamepads || !document.hasFocus() && !debug)
+    // return if gamepads are disabled or not supported
+    if (!gamepadsEnable || !navigator || !navigator.getGamepads)
+        return;
+
+    // only poll gamepads when focused or in debug mode
+    if (!debug && !document.hasFocus())
         return;
 
     // poll gamepads
@@ -2498,7 +2489,7 @@ function createTouchGamepad()
     touchGamepadStick = vec2();
 
     const touchHandler = ontouchstart;
-    ontouchstart = ontouchmove = ontouchend = (e)=> 
+    ontouchstart = ontouchmove = ontouchend = (e)=>
     {
         // clear touch gamepad input
         touchGamepadStick = vec2();
@@ -2628,7 +2619,7 @@ function touchGamepadRender()
 
 
 /** 
- * Sound Object - Stores a zzfx sound for later use and can be played positionally
+ * Sound Object - Stores a sound for later use and can be played positionally
  * 
  * <a href=https://killedbyapixel.github.io/ZzFX/>Create sounds using the ZzFX Sound Designer.</a>
  * @example
@@ -2643,7 +2634,7 @@ class Sound
     /** Create a sound object and cache the zzfx samples for later use
      *  @param {Array}  zzfxSound - Array of zzfx parameters, ex. [.5,.5]
      *  @param {Number} [range=soundDefaultRange] - World space max range of sound, will not play if camera is farther away
-     *  @param {Number} [taper=soundDefaultTaper] - At what percentage of range should it start tapering off
+     *  @param {Number} [taper=soundDefaultTaper] - At what percentage of range should it start tapering
      */
     constructor(zzfxSound, range=soundDefaultRange, taper=soundDefaultTaper)
     {
@@ -2823,24 +2814,24 @@ class Music extends Sound
 
     /** Play the music
      *  @param {Number}  [volume=1] - How much to scale volume by
-     *  @param {Boolean} [loop=1] - True if the music should loop
+     *  @param {Boolean} [loop] - True if the music should loop
      *  @return {AudioBufferSourceNode} - The audio source node
      */
-    playMusic(volume, loop = false)
+    playMusic(volume, loop=false)
     { return super.play(undefined, volume, 1, 1, loop); }
 }
 
 /** Play an mp3, ogg, or wav audio from a local file or url
- *  @param {String}  url - Location of sound file to play
+ *  @param {String}  filename - Location of sound file to play
  *  @param {Number}  [volume] - How much to scale volume by
  *  @param {Boolean} [loop] - True if the music should loop
  *  @return {HTMLAudioElement} - The audio element for this sound
  *  @memberof Audio */
-function playAudioFile(url, volume=1, loop=false)
+function playAudioFile(filename, volume=1, loop=false)
 {
     if (!soundEnable) return;
 
-    const audio = new Audio(url);
+    const audio = new Audio(filename);
     audio.volume = soundVolume * volume;
     audio.loop = loop;
     audio.play();
@@ -2892,6 +2883,11 @@ function getNoteFrequency(semitoneOffset, rootFrequency=220)
  *  @memberof Audio */
 let audioContext = new AudioContext;
 
+/** Keep track if audio was suspended when last sound was played
+ *  @type {Boolean}
+ *  @memberof Audio */
+let audioSuspended = false;
+
 /** Play cached audio samples with given settings
  *  @param {Array}   sampleChannels - Array of arrays of samples to play (for stereo playback)
  *  @param {Number}  [volume] - How much to scale volume by
@@ -2906,11 +2902,15 @@ function playSamples(sampleChannels, volume=1, rate=1, pan=0, loop=false, sample
     if (!soundEnable) return;
 
     // prevent sounds from building up if they can't be played
-    if (audioContext.state != 'running')
+    const audioWasSuspended = audioSuspended;
+    if (audioSuspended = audioContext.state != 'running')
     {
         // fix stalled audio
         audioContext.resume();
-        return;
+
+        // prevent suspended sounds from building up
+        if (audioWasSuspended)
+            return;
     }
 
     // create buffer and source
@@ -3178,7 +3178,7 @@ function zzfxM(instruments, patterns, sequence, BPM = 125)
 /** 
  * LittleJS Tile Layer System
  * - Caches arrays of tiles to off screen canvas for fast rendering
- * - Unlimted numbers of layers, allocates canvases as needed
+ * - Unlimited numbers of layers, allocates canvases as needed
  * - Interfaces with EngineObject for collision
  * - Collision layer is separate from visible layers
  * - It is recommended to have a visible layer that matches the collision
@@ -3230,7 +3230,7 @@ function getTileCollisionData(pos)
 
 /** Check if collision with another object should occur
  *  @param {Vector2}      pos
- *  @param {Vector2}      [size=(1,1)]
+ *  @param {Vector2}      [size=(0,0)]
  *  @param {EngineObject} [object]
  *  @return {Boolean}
  *  @memberof TileCollision */
@@ -3747,16 +3747,17 @@ class ParticleEmitter extends EngineObject
         
         // build particle
         const particle = new Particle(pos, this.tileInfo, angle, colorStart, colorEnd, particleTime, sizeStart, sizeEnd, this.fadeRate, this.additive,  this.trailScale, this.localSpace && this, this.particleDestroyCallback);
-        particle.velocity     = vec2().setAngle(velocityAngle, speed);
-        particle.fadeRate     = this.fadeRate;
-        particle.damping      = this.damping;
-        particle.angleDamping = this.angleDamping;
-        particle.elasticity   = this.elasticity;
-        particle.friction     = this.friction;
-        particle.gravityScale = this.gravityScale;
-        particle.collideTiles = this.collideTiles;
-        particle.renderOrder  = this.renderOrder;
-        particle.mirror       = !!randInt(2);
+        particle.velocity      = vec2().setAngle(velocityAngle, speed);
+        particle.angleVelocity = angleSpeed;
+        particle.fadeRate      = this.fadeRate;
+        particle.damping       = this.damping;
+        particle.angleDamping  = this.angleDamping;
+        particle.elasticity    = this.elasticity;
+        particle.friction      = this.friction;
+        particle.gravityScale  = this.gravityScale;
+        particle.collideTiles  = this.collideTiles;
+        particle.renderOrder   = this.renderOrder;
+        particle.mirror        = !!randInt(2);
 
         // call particle create callaback
         this.particleCreateCallback && this.particleCreateCallback(particle);
@@ -4147,7 +4148,7 @@ class Newgrounds
         }
 
         // build the input object
-        const input = 
+        const input =
         {
             'app_id':     this.app_id,
             'session_id': this.session_id,
@@ -4362,8 +4363,6 @@ function glCreateTexture(image)
     const filter = canvasPixelated ? gl_NEAREST : gl_LINEAR;
     glContext.texParameteri(gl_TEXTURE_2D, gl_TEXTURE_MIN_FILTER, filter);
     glContext.texParameteri(gl_TEXTURE_2D, gl_TEXTURE_MAG_FILTER, filter);
-    glContext.texParameteri(gl_TEXTURE_2D, gl_TEXTURE_WRAP_S, gl_CLAMP_TO_EDGE);
-    glContext.texParameteri(gl_TEXTURE_2D, gl_TEXTURE_WRAP_T, gl_CLAMP_TO_EDGE);
 
     return texture;
 }
@@ -4441,7 +4440,7 @@ function glDraw(x, y, sizeX, sizeY, angle, uv0X, uv0Y, uv1X, uv1Y, rgba, rgbaAdd
 ///////////////////////////////////////////////////////////////////////////////
 // post processing - can be enabled to pass other canvases through a final shader
 
-let glPostShader, glPostArrayBuffer, glPostTexture, glPostIncludeOverlay;
+let glPostShader, glPostTexture, glPostIncludeOverlay;
 
 /** Set up a post processing shader
  *  @param {String} shaderCode
@@ -4477,7 +4476,6 @@ function glInitPostProcess(shaderCode, includeOverlay=false)
     );
 
     // create buffer and texture
-    glPostArrayBuffer = glContext.createBuffer();
     glPostTexture = glCreateTexture(undefined);
     glPostIncludeOverlay = includeOverlay;
 
@@ -4549,10 +4547,7 @@ gl_NEAREST = 9728,
 gl_LINEAR = 9729,
 gl_TEXTURE_MAG_FILTER = 10240,
 gl_TEXTURE_MIN_FILTER = 10241,
-gl_TEXTURE_WRAP_S = 10242,
-gl_TEXTURE_WRAP_T = 10243,
 gl_COLOR_BUFFER_BIT = 16384,
-gl_CLAMP_TO_EDGE = 33071,
 gl_TEXTURE0 = 33984,
 gl_ARRAY_BUFFER = 34962,
 gl_STATIC_DRAW = 35044,
@@ -4569,7 +4564,7 @@ gl_MAX_INSTANCES = 1e4,
 gl_INSTANCE_BYTE_STRIDE = gl_INDICIES_PER_INSTANCE * 4, // 11 * 4
 gl_INSTANCE_BUFFER_SIZE = gl_MAX_INSTANCES * gl_INSTANCE_BYTE_STRIDE;
 /** 
- * LittleJS - The Tiny JavaScript Game Engine That Can!
+ * LittleJS - The Tiny Fast JavaScript Game Engine
  * MIT License - Copyright 2021 Frank Force
  * 
  * Engine Features
@@ -4600,9 +4595,9 @@ const engineName = 'LittleJS';
  *  @type {String}
  *  @default
  *  @memberof Engine */
-const engineVersion = '1.9.2';
+const engineVersion = '1.9.3';
 
-/** Frames per second to update objects
+/** Frames per second to update
  *  @type {Number}
  *  @default
  *  @memberof Engine */
@@ -4619,7 +4614,7 @@ const timeDelta = 1/frameRate;
  *  @memberof Engine */
 let engineObjects = [];
 
-/** Array containing only objects that are set to collide with other objects this frame (for optimization)
+/** Array with only objects set to collide with other objects this frame (for optimization)
  *  @type {Array}
  *  @memberof Engine */
 let engineObjectsCollide = [];
@@ -4629,7 +4624,7 @@ let engineObjectsCollide = [];
  *  @memberof Engine */
 let frame = 0;
 
-/** Current engine time since start in seconds, derived from frame
+/** Current engine time since start in seconds
  *  @type {Number}
  *  @memberof Engine */
 let time = 0;
@@ -4655,12 +4650,12 @@ let frameTimeLastMS = 0, frameTimeBufferMS = 0, averageFPS = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-/** Start up LittleJS engine with your callback functions
- *  @param {Function} gameInit        - Called once after the engine starts up, setup the game
- *  @param {Function} gameUpdate      - Called every frame at 60 frames per second, handle input and update the game state
- *  @param {Function} gameUpdatePost  - Called after physics and objects are updated, setup camera and prepare for render
- *  @param {Function} gameRender      - Called before objects are rendered, draw any background effects that appear behind objects
- *  @param {Function} gameRenderPost  - Called after objects are rendered, draw effects or hud that appear above all objects
+/** Startup LittleJS engine with your callback functions
+ *  @param {Function} gameInit       - Called once after the engine starts up, setup the game
+ *  @param {Function} gameUpdate     - Called every frame at 60 frames per second, handle input and update the game state
+ *  @param {Function} gameUpdatePost - Called after physics and objects are updated, setup camera and prepare for render
+ *  @param {Function} gameRender     - Called before objects are rendered, draw any background effects that appear behind objects
+ *  @param {Function} gameRenderPost - Called after objects are rendered, draw effects or hud that appear above all objects
  *  @param {Array} [imageSources=['tiles.png']] - Image to load
  *  @memberof Engine */
 function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, imageSources=['tiles.png'])
@@ -5007,9 +5002,9 @@ function drawEngineSplashScreen(t)
 
     // big stack
     rect(50,20,10,-10,color(0,1));
-    rect(50,20,6,-10,color(0,2));
-    rect(50,20,3,-10,color(0,3));
-    rect(50,10,10,10);
+    rect(50,20,6.5,-10,color(0,2));
+    rect(50,20,3.5,-10,color(0,3));
+    rect(50,20,10,-10);
     circle(55,2,11.4,.5,PI-.5,color(3,3));
     circle(55,2,11.4,.5,PI/2,color(3,2),1);
     circle(55,2,11.4,.5,PI-.5);
@@ -5028,7 +5023,7 @@ function drawEngineSplashScreen(t)
 
     // engine outline
     circle(36,30,10,PI/2,PI*3/2);
-    circle(47,30,10,PI/2,PI*3/2);
+    circle(48,30,10,PI/2,PI*3/2);
     circle(60,30,10);
     line(36,20,60,20);
 

@@ -73,7 +73,7 @@ class Crate extends GameObject
 {
     constructor(pos) 
     { 
-        super(pos, vec2(1), spriteAtlas['crate'], (randInt(4))*PI/2);
+        super(pos, vec2(1), spriteAtlas.crate, (randInt(4))*PI/2);
 
         this.color = hsl(rand(),1,.8);
         this.health = 5;
@@ -99,7 +99,7 @@ class Coin extends EngineObject
 {
     constructor(pos) 
     { 
-        super(pos, vec2(1), spriteAtlas['coin']);
+        super(pos, vec2(1), spriteAtlas.coin);
         this.color = hsl(.15,1,.5);
     }
 
@@ -134,7 +134,7 @@ class Grenade extends GameObject
 {
     constructor(pos) 
     {
-        super(pos, vec2(.2), spriteAtlas['grenade']);
+        super(pos, vec2(.2), spriteAtlas.grenade);
 
         this.beepTimer = new Timer(1);
         this.elasticity   = .3;
@@ -167,7 +167,7 @@ class Grenade extends GameObject
         // draw additive flash exploding
         setBlendMode(true);
         const flash = Math.cos(this.getAliveTime()*2*PI);
-        drawTile(this.pos, vec2(2), spriteAtlas['circle'], hsl(0,1,.5,.2-.2*flash));
+        drawTile(this.pos, vec2(2), spriteAtlas.circle, hsl(0,1,.5,.2-.2*flash));
         setBlendMode(false);
     }
 }
@@ -178,7 +178,7 @@ class Weapon extends EngineObject
 {
     constructor(pos, parent) 
     { 
-        super(pos, vec2(.6), spriteAtlas['gun']);
+        super(pos, vec2(.6), spriteAtlas.gun);
 
         // weapon settings
         this.fireRate      = 8;
@@ -275,8 +275,8 @@ class Bullet extends EngineObject
         this.range -= this.velocity.length();
         if (this.range < 0)
         {
-            const emitter = new ParticleEmitter(
-                this.pos, 0, .2, .1, 50, PI, spriteAtlas['circle'], // pos, emit info, tileInfo
+            new ParticleEmitter(
+                this.pos, 0, .2, .1, 50, PI, spriteAtlas.circle, // pos, emit info, tileInfo
                 rgb(1,1,.1), rgb(1,1,1),    // colorStartA, colorStartB
                 rgb(1,1,.1,0), rgb(1,1,1,0),// colorEndA, colorEndB
                 .1, .5, .1, .05, 0, // particleTime, sizeStart, sizeEnd, speed, angleSpeed
