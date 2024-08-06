@@ -41,9 +41,9 @@ class Enemy1 extends GameObject
         }
     }
 
-    jumpTowardsPlayer()
+    doHuntPlayer()
     {
-        const vecToPlayer = player.pos.subtract(this.pos).normalize();
+        const vecToPlayer = this.normVecToPlayer();
 
         // if in air, drift towards player
         if (!this.groundObject)
@@ -55,11 +55,7 @@ class Enemy1 extends GameObject
             // on ground. randomly jump towards player
             if (rand() < 0.01)
             {
-                const jumpYSpeed = rand(.4, .2);
-                const jumpXSpeed = rand(.07, .2);
-                this.velocity = vecToPlayer.multiply(vec2(jumpXSpeed, 0));
-                this.velocity.y = jumpYSpeed;
-                sound_jump.play(this.pos, .4, 2);
+                this.jumpTowardsPlayer(vecToPlayer);
             }
             else
             {
@@ -69,10 +65,34 @@ class Enemy1 extends GameObject
         }
     }
 
+    normVecToPlayer() {
+        return player.pos.subtract(this.pos).normalize();
+    }
+
+    /**
+     * @param {vec2?} vecToPlayer 
+     */
+    jumpTowardsPlayer(vecToPlayer)
+    {
+        if (!vecToPlayer)
+            vecToPlayer = this.normVecToPlayer();
+
+        const jumpYSpeed = rand(.4, .2);
+        const jumpXSpeed = rand(.07, .2);
+        this.velocity = vecToPlayer.multiply(vec2(jumpXSpeed, 0));
+        this.velocity.y = jumpYSpeed;
+        sound_jump.play(this.pos, .4, 2);
+    }
+
     damage(damage, damagingObject)
     {
         super.damage(damage, damagingObject);
         this.sm.dispatchEvent(Enemy1Sm.EventId.DAMAGED);
+
+        if (!this.isDead() && this.groundObject)
+        {
+            this.jumpTowardsPlayer();
+        }
     }
     
     update()

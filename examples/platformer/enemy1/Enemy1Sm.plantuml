@@ -30,7 +30,7 @@ JUMP_AROUND --> HUNTING: [obj.playerDist() <= 4]
 
 HUNTING: enter / obj.swellSpeed = 30;
 HUNTING: enter/ obj.huntingTimer.set(10);
-HUNTING: do / obj.jumpTowardsPlayer();
+HUNTING: do / obj.doHuntPlayer();
 HUNTING --> JUMP_AROUND: [obj.huntingTimer.elapsed()]
 
 

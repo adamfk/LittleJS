@@ -194,10 +194,10 @@ class Enemy1Sm
         // No ancestor state handles `do` event.
         
         // HUNTING behavior
-        // uml: do / { obj.jumpTowardsPlayer(); }
+        // uml: do / { obj.doHuntPlayer(); }
         {
-            // Step 1: execute action `obj.jumpTowardsPlayer();`
-            this.vars.obj.jumpTowardsPlayer();
+            // Step 1: execute action `obj.doHuntPlayer();`
+            this.vars.obj.doHuntPlayer();
             
             // Step 2: determine if ancestor gets to handle event next.
             // Don't consume special `do` event.

@@ -240,7 +240,7 @@ state AWAKE {
 
         HUNTING : enter / #123; obj.huntingTimer.set(10)#59; #125;
 
-        HUNTING : do / #123; obj.jumpTowardsPlayer()#59; #125;
+        HUNTING : do / #123; obj.doHuntPlayer()#59; #125;
 
 }
 
@@ -516,10 +516,10 @@ evaluateGuard = null;
         // No ancestor state handles `do` event.
         
         // HUNTING behavior
-        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();"); }
+        // uml: do / { this.tracer?.log("⚡ FSM would execute action: " + "obj.doHuntPlayer();"); }
         {
-            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();");`
-            this.tracer?.log("⚡ FSM would execute action: " + "obj.jumpTowardsPlayer();");
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.doHuntPlayer();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.doHuntPlayer();");
             
             // Step 2: determine if ancestor gets to handle event next.
             // Don't consume special `do` event.
