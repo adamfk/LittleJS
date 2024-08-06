@@ -21,6 +21,8 @@ state JUMP_AROUND
 
 state HUNTING
 
+state HIT_CELEBRATION
+
 [*] -> INITIAL
 
 
@@ -29,6 +31,7 @@ state HUNTING
 
 PA --> HUNTING: DAMAGED
 PA --> JUMP_AROUND: HEARD_SHOT
+PA --> HIT_CELEBRATION: HIT_PLAYER
 
 INITIAL --> PATROL: [obj.playerDist() <= 8]
 INITIAL: enter / obj.swellSpeed = 2;
@@ -37,9 +40,7 @@ SLEEPING: enter / obj.swellSpeed = 2;
 ' SLEEPING: enter / timer.set(rand(5, 10));
 SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 8]
 
-' PATROL: enter / timer.set(rand(5, 10));
-' PATROL -> SLEEPING: [timer.elapsed()]
-PATROL_MARCH: enter / obj.swellSpeed = 4;
+PATROL: enter / obj.swellSpeed = 4;
 PATROL_MARCH: enter / obj.stallTracker.reset();
 PATROL_MARCH: do / obj.stallTracker.update();
 PATROL_MARCH: do / obj.doPatrolMarch();
@@ -68,6 +69,11 @@ HUNTING: do / obj.stallTracker.update();
 HUNTING: do / obj.doHuntPlayer();
 HUNTING: HEARD_SHOT / 
 HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
+
+HIT_CELEBRATION: enter / obj.swellSpeed = 60;
+HIT_CELEBRATION: enter / timer.set(2);
+HIT_CELEBRATION: HIT_PLAYER / 
+HIT_CELEBRATION --> SLEEPING: [timer.elapsed()]
 
 ' //////////////////////// StateSmith config ////////////////////////
 ' The below special comment block sets the StateSmith configuration.

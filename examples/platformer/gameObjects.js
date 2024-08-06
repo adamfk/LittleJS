@@ -292,7 +292,7 @@ class Bullet extends EngineObject
     }
     
     notifyShotSound() {
-        engineObjectsCallback(this.pos, 4, (o) => {
+        engineObjectsCallback(this.pos, 6, (o) => {
             if (o.isGameObject)
                 o.heardShot(this.pos);
         });

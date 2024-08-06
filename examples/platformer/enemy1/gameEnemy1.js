@@ -202,6 +202,7 @@ class Enemy1 extends GameObject
         // damage player if touching
         if (isOverlapping(this.pos, this.size, player.pos, player.size))
         {
+            this.sm.dispatchEvent(Enemy1Sm.EventId.HIT_PLAYER);
             player.damage(1, this);
         }
 
