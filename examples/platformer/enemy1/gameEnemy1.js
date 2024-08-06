@@ -57,9 +57,12 @@ class Enemy1 extends GameObject
         this.sm = new Enemy1Sm();
         this.sm.vars.obj = this;
         this.spawnPos = pos.copy();
-        this.patrolVec = vec2(0.05,0);
-        this.patrolRange = 7;
+        this.patrolVec = vec2(0.05, 0);
+        this.patrolRange = 6;
         this.stallTracker = new StallTracker(this);
+
+        if (rand() < 0.5)
+            this.patrolVec.x *= -1;
 
         this.sm.start();
     }
@@ -72,7 +75,7 @@ class Enemy1 extends GameObject
     jumpAround()
     {
         // jump around randomly
-        if (this.groundObject && rand() < 0.02)
+        if (this.groundObject && rand() < 0.1)
         {
             this.velocity = vec2(rand(.1,-.1), rand(.4, .2));
             sound_jump.play(this.pos, .4, 2);
@@ -181,6 +184,11 @@ class Enemy1 extends GameObject
         }
     }
     
+    heardShot(pos)
+    {
+        this.sm.dispatchEvent(Enemy1Sm.EventId.HEARD_SHOT);
+    }
+
     update()
     {
         super.update();
@@ -203,17 +211,13 @@ class Enemy1 extends GameObject
             this.sm.dispatchEvent(Enemy1Sm.EventId.PLAYER_DEAD);
         }
 
-        // const debugClosest = true;
-        // if (debugClosest) {
-        //     if (this.playerDist() < 20)
-        //     {
-        //         window.debugEnemy = this;
-        //     }
-        //     else
-        //     {
-        //         // this.destroy();
-        //     }
-        // }
+        const debugClosest = true;
+        if (debugClosest) {
+            if (this.playerDist() < 20)
+            {
+                window.debugEnemy = this;
+            }
+        }
     }
 
     kill()

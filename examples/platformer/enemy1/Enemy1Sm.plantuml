@@ -6,6 +6,7 @@
 
 state "$parent_alias" as PA
 
+state INITIAL
 state SLEEPING
 
 state PATROL {
@@ -20,20 +21,23 @@ state JUMP_AROUND
 
 state HUNTING
 
-[*] -> SLEEPING
+[*] -> INITIAL
 
 
 ' ///////////////////////// STATE HANDLERS /////////////////////////
 ' Syntax: https://github.com/StateSmith/StateSmith/wiki/Behaviors
 
 PA --> HUNTING: DAMAGED
+PA --> JUMP_AROUND: HEARD_SHOT
+
+INITIAL --> PATROL: [obj.playerDist() <= 8]
+INITIAL: enter / obj.swellSpeed = 2;
 
 SLEEPING: enter / obj.swellSpeed = 2;
-SLEEPING: enter / timer.set(rand(5, 10));
-SLEEPING -> PATROL: [obj.playerDist() <= 10]
-' SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 5]
+' SLEEPING: enter / timer.set(rand(5, 10));
+SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 8]
 
-PATROL: enter / timer.set(rand(5, 10));
+' PATROL: enter / timer.set(rand(5, 10));
 ' PATROL -> SLEEPING: [timer.elapsed()]
 PATROL_MARCH: enter / obj.swellSpeed = 4;
 PATROL_MARCH: enter / obj.stallTracker.reset();
@@ -50,15 +54,19 @@ PATROL_END_HOP --> PATROL_MARCH: [obj.groundObject] / obj.patrolTurn();
 HUNTING --> SLEEPING: PLAYER_DEAD
 
 JUMP_AROUND: enter / obj.swellSpeed = 8;
+JUMP_AROUND: enter / timer.set(rand(4, 6));
 JUMP_AROUND: do / obj.jumpAround();
-JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
+' JUMP_AROUND --> SLEEPING: [obj.playerDist() >= 10]
+JUMP_AROUND --> SLEEPING: [timer.elapsed()]
 JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
+JUMP_AROUND -r-> HUNTING: HEARD_SHOT
 
 HUNTING: enter / obj.swellSpeed = 30;
+HUNTING: enter / timer.set(rand(5,15));
 HUNTING: enter / obj.stallTracker.reset();
 HUNTING: do / obj.stallTracker.update();
-HUNTING: enter / timer.set(10);
 HUNTING: do / obj.doHuntPlayer();
+HUNTING: HEARD_SHOT / 
 HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
 
 ' //////////////////////// StateSmith config ////////////////////////

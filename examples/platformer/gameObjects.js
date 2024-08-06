@@ -36,6 +36,13 @@ class GameObject extends EngineObject
             warmup ? this.destroy() : this.kill();
     }
 
+    // this is just for notifying interested objects
+    // override this in derived classes to do something useful
+    heardShot(pos)
+    {
+
+    }
+
     damage(damage, damagingObject)
     {
         ASSERT(damage >= 0);
@@ -248,6 +255,9 @@ class Bullet extends EngineObject
         this.drawSize = vec2(.2,.5);
         this.range = 5;
         this.setCollision(1,0);
+
+        // notify any nearby objects of the shot
+        this.notifyShotSound();
     }
 
     update()
@@ -258,7 +268,7 @@ class Bullet extends EngineObject
             if (o.isGameObject)
                 this.collideWithObject(o)
         });
-            
+          
         super.update();
 
         this.angle = this.velocity.angle();
@@ -274,10 +284,20 @@ class Bullet extends EngineObject
                 .5, 0, 1            // randomness, collide, additive, randomColorLinear
             );
 
+            // notify any nearby objects of the shot
+            this.notifyShotSound();
+
             this.destroy();
         }
     }
     
+    notifyShotSound() {
+        engineObjectsCallback(this.pos, 4, (o) => {
+            if (o.isGameObject)
+                o.heardShot(this.pos);
+        });
+    }
+
     collideWithObject(o)
     {
         if (o.isGameObject && o != this.attacker)
