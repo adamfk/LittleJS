@@ -222,11 +222,15 @@ INITIAL : INITIAL
 
 INITIAL : enter / #123; obj.swellSpeed = 2#59; #125;
 
+INITIAL : exit / #123; obj.playMutterSound()#59; #125;
+
 SLEEPING
 
 SLEEPING : SLEEPING
 
 SLEEPING : enter / #123; obj.swellSpeed = 2#59; #125;
+
+SLEEPING : exit / #123; obj.playMutterSound()#59; #125;
 
 state PATROL {
 
@@ -272,6 +276,8 @@ HUNTING : HUNTING
 
 HUNTING : enter / #123; obj.swellSpeed = 30#59; #125;
 
+HUNTING : enter / #123; obj.playHuntSound()#59; #125;
+
 HUNTING : enter / #123; timer.set(rand(5,15))#59; #125;
 
 HUNTING : enter / #123; obj.stallTracker.reset()#59; #125;
@@ -287,6 +293,8 @@ HIT_CELEBRATION
 HIT_CELEBRATION : HIT_CELEBRATION
 
 HIT_CELEBRATION : enter / #123; obj.swellSpeed = 60#59; #125;
+
+HIT_CELEBRATION : enter / #123; obj.playCelebrationSound()#59; #125;
 
 HIT_CELEBRATION : enter / #123; timer.set(2)#59; #125;
 
@@ -580,6 +588,13 @@ evaluateGuard = null;
         } // end of behavior for HIT_CELEBRATION
         
         // HIT_CELEBRATION behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.playCelebrationSound();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.playCelebrationSound();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.playCelebrationSound();");
+        } // end of behavior for HIT_CELEBRATION
+        
+        // HIT_CELEBRATION behavior
         // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "timer.set(2);"); }
         {
             // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "timer.set(2);");`
@@ -665,6 +680,13 @@ evaluateGuard = null;
         {
             // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 30;");`
             this.tracer?.log("⚡ FSM would execute action: " + "obj.swellSpeed = 30;");
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
+        // uml: enter / { this.tracer?.log("⚡ FSM would execute action: " + "obj.playHuntSound();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.playHuntSound();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.playHuntSound();");
         } // end of behavior for HUNTING
         
         // HUNTING behavior
@@ -807,6 +829,13 @@ evaluateGuard = null;
     
     #INITIAL_exit()
     {
+        // INITIAL behavior
+        // uml: exit / { this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();");
+        } // end of behavior for INITIAL
+        
         // INITIAL behavior
         // uml: exit / { this.tracer?.exitState('INITIAL'); }
         {
@@ -1259,6 +1288,13 @@ evaluateGuard = null;
     
     #SLEEPING_exit()
     {
+        // SLEEPING behavior
+        // uml: exit / { this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();"); }
+        {
+            // Step 1: execute action `this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();");`
+            this.tracer?.log("⚡ FSM would execute action: " + "obj.playMutterSound();");
+        } // end of behavior for SLEEPING
+        
         // SLEEPING behavior
         // uml: exit / { this.tracer?.exitState('SLEEPING'); }
         {

@@ -23,6 +23,9 @@ const sound_explosion =    new Sound([2,.2,72,.01,.01,.2,4,,,,,,,1,,.5,.1,.5,.02
 const sound_grenade =      new Sound([.5,.01,300,,,.02,3,.22,,,-9,.2,,,,,,.5]);
 const sound_score =        new Sound([,,783,,.03,.02,1,2,,,940,.03,,,,,.2,.6,,.06]);
 
+// spooky robot like sound. Repeat to add tension. Running out of time?
+// zzfx(...[,,239,.02,.2,.38,1,2.2,,46,,,.04,,47,.1,,.8,.22,,99]); // Powerup 44
+
 ///////////////////////////////////////////////////////////////////////////////
 // special effects
 

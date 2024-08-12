@@ -41,6 +41,15 @@ class StallTracker
 }
 
 
+/* enemy sounds
+hunting: zzfx(...[1.5,-0.25,,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]); // Powerup 21
+laughing: zzfx(...[1.5,-0.25,440,.07,.31,.44,,4.5,5,,,,.08,,15,,,.97,.12,,505]); // Powerup 21
+low: zzfx(...[1.5,-0.25,65.40639,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]); // Powerup 212
+*/
+
+const sound_enemy_hunting = new Sound([1.5,-0.25,,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]);
+const sound_enemy_laughing = new Sound([1.5,-0.25,440,.07,.31,.44,,4.5,5,,,,.08,,15,,,.97,.12,,505]);
+const sound_enemy_mutter = new Sound([1.5,-0.25,65.40639,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]);
 
 class Enemy1 extends GameObject 
 {
@@ -70,6 +79,18 @@ class Enemy1 extends GameObject
     playerDist()
     {
         return this.pos.distance(player.pos);
+    }
+
+    playHuntSound() {
+        sound_enemy_hunting.play(this.pos, .4);
+    }
+
+    playCelebrationSound() {
+        sound_enemy_laughing.play(this.pos, .4);
+    }
+
+    playMutterSound() {
+        sound_enemy_mutter.play(this.pos, .4);
     }
 
     jumpAround()
@@ -227,6 +248,7 @@ class Enemy1 extends GameObject
             return;
 
         ++score;
+        sound_enemy_hunting.stop(); // doesn't seem to work...
         sound_score.play(this.pos);
         makeDebris(this.pos, this.color);
         this.destroy();

@@ -212,6 +212,13 @@ class Enemy1Sm
         } // end of behavior for HIT_CELEBRATION
         
         // HIT_CELEBRATION behavior
+        // uml: enter / { obj.playCelebrationSound(); }
+        {
+            // Step 1: execute action `obj.playCelebrationSound();`
+            this.vars.obj.playCelebrationSound();
+        } // end of behavior for HIT_CELEBRATION
+        
+        // HIT_CELEBRATION behavior
         // uml: enter / { timer.set(2); }
         {
             // Step 1: execute action `timer.set(2);`
@@ -282,6 +289,13 @@ class Enemy1Sm
         {
             // Step 1: execute action `obj.swellSpeed = 30;`
             this.vars.obj.swellSpeed = 30;
+        } // end of behavior for HUNTING
+        
+        // HUNTING behavior
+        // uml: enter / { obj.playHuntSound(); }
+        {
+            // Step 1: execute action `obj.playHuntSound();`
+            this.vars.obj.playHuntSound();
         } // end of behavior for HUNTING
         
         // HUNTING behavior
@@ -408,6 +422,13 @@ class Enemy1Sm
     
     #INITIAL_exit()
     {
+        // INITIAL behavior
+        // uml: exit / { obj.playMutterSound(); }
+        {
+            // Step 1: execute action `obj.playMutterSound();`
+            this.vars.obj.playMutterSound();
+        } // end of behavior for INITIAL
+        
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#ROOT_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event
@@ -769,6 +790,13 @@ class Enemy1Sm
     
     #SLEEPING_exit()
     {
+        // SLEEPING behavior
+        // uml: exit / { obj.playMutterSound(); }
+        {
+            // Step 1: execute action `obj.playMutterSound();`
+            this.vars.obj.playMutterSound();
+        } // end of behavior for SLEEPING
+        
         // adjust function pointers for this state's exit
         this.#currentStateExitHandler = this.#ROOT_exit;
         this.#currentEventHandlers[Enemy1Sm.EventId.DO] = null;  // no ancestor listens to this event

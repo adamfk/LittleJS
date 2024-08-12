@@ -35,10 +35,12 @@ PA --> HIT_CELEBRATION: HIT_PLAYER
 
 INITIAL --> PATROL: [obj.playerDist() <= 8]
 INITIAL: enter / obj.swellSpeed = 2;
+INITIAL: exit / obj.playMutterSound();
 
 SLEEPING: enter / obj.swellSpeed = 2;
 ' SLEEPING: enter / timer.set(rand(5, 10));
 SLEEPING --> JUMP_AROUND: [obj.playerDist() <= 8]
+SLEEPING: exit / obj.playMutterSound();
 
 PATROL: enter / obj.swellSpeed = 4;
 PATROL_MARCH: enter / obj.stallTracker.reset();
@@ -63,6 +65,7 @@ JUMP_AROUND -r-> HUNTING: [obj.playerDist() <= 4]
 JUMP_AROUND -r-> HUNTING: HEARD_SHOT
 
 HUNTING: enter / obj.swellSpeed = 30;
+HUNTING: enter / obj.playHuntSound();
 HUNTING: enter / timer.set(rand(5,15));
 HUNTING: enter / obj.stallTracker.reset();
 HUNTING: do / obj.stallTracker.update();
@@ -71,6 +74,7 @@ HUNTING: HEARD_SHOT /
 HUNTING -l-> JUMP_AROUND: [timer.elapsed()]
 
 HIT_CELEBRATION: enter / obj.swellSpeed = 60;
+HIT_CELEBRATION: enter / obj.playCelebrationSound();
 HIT_CELEBRATION: enter / timer.set(2);
 HIT_CELEBRATION: HIT_PLAYER / 
 HIT_CELEBRATION --> SLEEPING: [timer.elapsed()]
