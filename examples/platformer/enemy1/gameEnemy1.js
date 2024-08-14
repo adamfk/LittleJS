@@ -1,49 +1,8 @@
 'use strict';
 
-class StallTracker
-{
-    stallCount;
-    startingPos;
-
-    constructor(gameObject)
-    {
-        this.gameObject = gameObject;
-        this.mask = vec2(1,0); // don't care about y for now
-
-        this.reset();
-    }
-
-    /**
-     * @param {Vector2?} startingPos
-     */
-    reset(startingPos)
-    {
-        this.stallCount = 0;
-        this.startingPos = startingPos ?? this.getMaskedPosition(this.gameObject);
-    }
-    
-    getMaskedPosition(gameObject) {
-        return gameObject.pos.multiply(this.mask);
-    }
-
-    update()
-    {
-        const pos = this.getMaskedPosition(this.gameObject);
-        if (pos.distance(this.startingPos) > 0.01)
-        {
-            this.reset(pos);
-        }
-        else
-        {
-            this.stallCount++;
-        }
-    }
-}
-
-
 /* enemy sounds
-hunting: zzfx(...[1.5,-0.25,,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]); // Powerup 21
-laughing: zzfx(...[1.5,-0.25,440,.07,.31,.44,,4.5,5,,,,.08,,15,,,.97,.12,,505]); // Powerup 21
+hunting: zzfx(...[1.5,-0.25,,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]);
+laughing: zzfx(...[1.5,-0.25,440,.07,.31,.44,,4.5,5,,,,.08,,15,,,.97,.12,,505]);
 low: zzfx(...[1.5,-0.25,65.40639,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]); // Powerup 212
 */
 
@@ -51,8 +10,10 @@ const sound_enemy_hunting = new Sound([1.5,-0.25,,.07,.23,.25,,4.5,5,,,.12,.08,,
 const sound_enemy_laughing = new Sound([1.5,-0.25,440,.07,.31,.44,,4.5,5,,,,.08,,15,,,.97,.12,,505]);
 const sound_enemy_mutter = new Sound([1.5,-0.25,65.40639,.07,.23,.25,,4.5,5,,,.12,.08,,17.1,,,.97,.18,1,505]);
 
-class Enemy1 extends GameObject 
+class Enemy1 extends GameObject
 {
+    tileOffsets = {awake: 0, sleeping: 1, mad: 2};
+
     constructor(pos)
     { 
         super(pos, vec2(.9,.9), spriteAtlas['enemy']);
@@ -69,11 +30,23 @@ class Enemy1 extends GameObject
         this.patrolVec = vec2(0.05, 0);
         this.patrolRange = 6;
         this.stallTracker = new StallTracker(this);
+        this.tileInfo = tile(6);
 
         if (rand() < 0.5)
             this.patrolVec.x *= -1;
 
         this.sm.start();
+    }
+
+    useTile(offsetName) {
+        const baseTile = spriteAtlas.enemy;
+        // this.tileInfo.pos.x = baseTile.pos.x - baseTile.size.x * 1;
+        this.tileInfo.pos.x = baseTile.pos.x + baseTile.size.x * this.tileOffsets[offsetName];
+        this.tileInfo.textureIndex = 0;
+    }
+
+    resetTile() {
+        this.useTile('awake');
     }
 
     playerDist()
@@ -264,5 +237,7 @@ class Enemy1 extends GameObject
         let bodyPos = this.pos;
         bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
+        debugText(Enemy1Sm.stateIdToString(this.sm.stateId), this.pos.add(vec2(0,1)), 0.5);
+        // debugCircle(this.pos, 8, hsl(0, 0, 1, 0.2));
     }
 }

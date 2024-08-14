@@ -23,8 +23,8 @@ function gameInit()
         circle:  tile(0),
         crate:   tile(2),
         player:  tile(3),
-        enemy:   tile(5),
-        coin:    tile(6),
+        enemy:   tile(6),
+        coin:    tile(16),
 
         // small tiles
         gun:     tile(2,8),
