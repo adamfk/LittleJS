@@ -24,8 +24,6 @@ class Enemy1 extends GameObject
         this.swellSpeed = 6;
         this.swellTimer = new Timer(rand(1e3));
         this.setCollision(true, false);
-        this.sm = new Enemy1Sm();
-        this.sm.vars.obj = this;
         this.spawnPos = pos.copy();
         this.patrolVec = vec2(0.05, 0);
         this.patrolRange = 6;
@@ -35,8 +33,141 @@ class Enemy1 extends GameObject
         if (rand() < 0.5)
             this.patrolVec.x *= -1;
 
-        this.sm.start();
+        this.visionRange = 10;
+
+        /** how often to check for player */
+        this.visionFrameInterval = 1;   // todo performance - check less often
+        this.canSeePlayer = false;
+        // this.sm = new Enemy1Sm();
+        // this.sm.vars.obj = this;
+        // this.sm.start();
     }
+
+    // engine function
+    update()
+    {
+        super.update();
+        
+        if (!player)
+            return;
+
+        // run state machine
+        // this.sm.dispatchEvent(Enemy1Sm.EventId.DO);
+
+        // damage player if touching
+        if (isOverlapping(this.pos, this.size, player.pos, player.size))
+        {
+            // this.sm.dispatchEvent(Enemy1Sm.EventId.HIT_PLAYER);
+            // player.damage(1, this);
+        }
+
+        // todo performance - only do once when it happens
+        if (player.isDead())
+        {
+            // this.sm.dispatchEvent(Enemy1Sm.EventId.PLAYER_DEAD);
+        }
+        else
+        {
+            this.#updateVision();
+        }
+
+        const debugClosest = true;
+        if (debugClosest) {
+            if (this.playerDist() < 20)
+            {
+                window.debugEnemy = this;
+            }
+        }
+    }
+
+    // engine function
+    kill()
+    {
+        if (this.destroyed)
+            return;
+
+        ++score;
+        sound_enemy_hunting.stop(); // doesn't seem to work...
+        sound_score.play(this.pos);
+        makeDebris(this.pos, this.color);
+        this.destroy();
+    }
+    
+    // engine function
+    render()
+    {
+        // bounce by changing size
+        const bounceTime = this.swellTimer * this.swellSpeed;
+        this.drawSize = vec2(1-.1*Math.sin(bounceTime), 1+.1*Math.sin(bounceTime));
+
+        // make bottom flush
+        let bodyPos = this.pos;
+        bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
+        drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
+        // debugText(Enemy1Sm.stateIdToString(this.sm.stateId), this.pos.add(vec2(0,1)), 0.5);
+
+        // if (this.canSeePlayer)
+            // debugText("See you!", this.pos.add(vec2(0,1)), 0.5);
+
+        debugCircle(this.pos, this.visionRange, '#FFF3');
+    }
+
+    #updateVision()
+    {
+        if (!player || player.isDead())
+            return;
+
+        if (frame % this.visionFrameInterval !== 0)
+            return;
+
+        this.canSeePlayer = this.#playerVisionTest();
+
+        if (this.canSeePlayer)
+        {
+            this.useTile('mad');
+        }
+        else
+        {
+            this.resetTile();
+        }
+    }
+
+    #playerVisionTest()
+    {
+        // do cheaper tests first
+
+        /** @type {Vector2} */
+        const playerVec = player.pos.subtract(this.pos);
+
+        // within vision range?
+        if (playerVec.length() > this.visionRange)
+        {
+            debugText("too far", this.pos.add(vec2(0,1)), 0.5);   
+            return false;
+        }
+
+        // facing player?
+        const isFacingRight = !this.mirror;
+        const playerIsRight = playerVec.x > 0;
+        if (isFacingRight != playerIsRight)
+        {
+            debugText("wrong way", this.pos.add(vec2(0,1)), 0.5);   
+            return false;
+        }
+
+        // check if player is in line of sight
+        const obstacleRayCast = tileCollisionRaycast(this.pos, player.pos, this);   // note! allows seeing through crates. Just call it a feature :)
+        if (obstacleRayCast !== undefined)
+        {
+            debugText("view blocked", this.pos.add(vec2(0,1)), 0.5);   
+            return false;
+        }
+
+        debugText("See you!!!", this.pos.add(vec2(0,1)), 0.5);   
+
+        return true;
+    }
+
 
     useTile(offsetName) {
         const baseTile = spriteAtlas.enemy;
@@ -169,7 +300,7 @@ class Enemy1 extends GameObject
     damage(damage, damagingObject)
     {
         super.damage(damage, damagingObject);
-        this.sm.dispatchEvent(Enemy1Sm.EventId.DAMAGED);
+        // this.sm.dispatchEvent(Enemy1Sm.EventId.DAMAGED);
 
         // if damaged, sometimes jump at player
         if (this.groundObject && rand() < 0.5)
@@ -180,64 +311,6 @@ class Enemy1 extends GameObject
     
     heardShot(pos)
     {
-        this.sm.dispatchEvent(Enemy1Sm.EventId.HEARD_SHOT);
-    }
-
-    update()
-    {
-        super.update();
-        
-        if (!player)
-            return;
-
-        // run state machine
-        this.sm.dispatchEvent(Enemy1Sm.EventId.DO);
-
-        // damage player if touching
-        if (isOverlapping(this.pos, this.size, player.pos, player.size))
-        {
-            this.sm.dispatchEvent(Enemy1Sm.EventId.HIT_PLAYER);
-            player.damage(1, this);
-        }
-
-        // todo performance - only do once when it happens
-        if (player.isDead())
-        {
-            this.sm.dispatchEvent(Enemy1Sm.EventId.PLAYER_DEAD);
-        }
-
-        const debugClosest = true;
-        if (debugClosest) {
-            if (this.playerDist() < 20)
-            {
-                window.debugEnemy = this;
-            }
-        }
-    }
-
-    kill()
-    {
-        if (this.destroyed)
-            return;
-
-        ++score;
-        sound_enemy_hunting.stop(); // doesn't seem to work...
-        sound_score.play(this.pos);
-        makeDebris(this.pos, this.color);
-        this.destroy();
-    }
-    
-    render()
-    {
-        // bounce by changing size
-        const bounceTime = this.swellTimer * this.swellSpeed;
-        this.drawSize = vec2(1-.1*Math.sin(bounceTime), 1+.1*Math.sin(bounceTime));
-
-        // make bottom flush
-        let bodyPos = this.pos;
-        bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
-        drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror, this.additiveColor);
-        debugText(Enemy1Sm.stateIdToString(this.sm.stateId), this.pos.add(vec2(0,1)), 0.5);
-        // debugCircle(this.pos, 8, hsl(0, 0, 1, 0.2));
+        // this.sm.dispatchEvent(Enemy1Sm.EventId.HEARD_SHOT);
     }
 }
