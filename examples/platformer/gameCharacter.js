@@ -31,12 +31,15 @@ class Character extends GameObject
         this.renderOrder = 10;
         this.walkCyclePercent = 0;
         this.health = 1;
+        this.isCrouchPressed = false;
         this.setCollision(true,false);
     }
     
     update() 
     {
         this.gravityScale = 1; // reset to default gravity
+
+        this.isCrouchPressed = keyIsDown("KeyS");
 
         if (this.isDead())
             return super.update();
@@ -175,7 +178,7 @@ class Character extends GameObject
         }
         
         // apply movement acceleration and clamp
-        const maxCharacterSpeed = .2;
+        const maxCharacterSpeed = this.isCrouchPressed ? 0.1 : 0.2;
         this.velocity.x = clamp(this.velocity.x + moveInput.x * .042, -maxCharacterSpeed, maxCharacterSpeed);
 
         // track last pos for ladder collision code
@@ -230,7 +233,15 @@ class Character extends GameObject
             // make bottom flush
             bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         }
-        drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+        let drawSize = this.drawSize.copy();
+        // if key 'S' is pressed, make the character smaller
+        if (this.isCrouchPressed) {
+            const toSub = drawSize.y * 0.25;
+            drawSize.y -= toSub;
+            bodyPos.y -= toSub/2;
+        }
+
+        drawTile(bodyPos, drawSize, this.tileInfo, this.color, this.angle, this.mirror);
     }
 
     damage(damage, damagingObject)
